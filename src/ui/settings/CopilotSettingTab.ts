@@ -16,7 +16,7 @@
  */
 
 import { App, PluginSettingTab } from "obsidian";
-import CopilotPlugin from "../../main";
+import { AIServiceManager as CopilotPlugin } from "../../app/AIServiceManager";
 import { GitHubCopilotCliManager, CliStatus } from "../../ai/providers/GitHubCopilotCliManager";
 import { ToolCatalog } from "../../ai/tools/ToolCatalog";
 import { CopilotChatView, COPILOT_VIEW_TYPE } from "../../chat";

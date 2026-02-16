@@ -2,7 +2,7 @@
  * Note picker modal for attaching notes to chat context
  */
 import { FuzzySuggestModal, TFile } from "obsidian";
-import CopilotPlugin from "../../main";
+import { AIServiceManager as CopilotPlugin } from "../../app/AIServiceManager";
 
 /**
  * Fuzzy suggest modal for selecting notes from the vault

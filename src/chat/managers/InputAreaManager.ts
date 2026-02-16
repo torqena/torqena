@@ -11,7 +11,7 @@
  */
 
 import { TFile } from "obsidian";
-import CopilotPlugin from "../../main";
+import { AIServiceManager as CopilotPlugin } from "../../app/AIServiceManager";
 import { NoteSuggestModal } from "../modals/NoteSuggestModal";
 
 /**

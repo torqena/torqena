@@ -22,7 +22,7 @@ import { ContextAugmentation } from "./ContextAugmentation";
 import { UsedReference } from "../renderers/MessageRenderer";
 import { CachedAgentInfo } from "../../ai/customization/AgentCache";
 import { GitHubCopilotCliService } from "../../ai/providers/GitHubCopilotCliService";
-import type CopilotPlugin from "../../main";
+import type { AIServiceManager as CopilotPlugin } from "../../app/AIServiceManager";
 
 /**
  * Parameters for building message context

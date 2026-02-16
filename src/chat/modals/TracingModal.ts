@@ -22,7 +22,7 @@ import { App, ItemView, Menu, Modal, WorkspaceLeaf } from "obsidian";
 import { setIcon } from "../../platform/utils/icons";
 import { Platform } from "../../platform/utils/platform";
 import { TracingService, TracingTrace, TracingSpan, TracingEvent, SDKLogEntry, getTracingService } from "../../ai/TracingService";
-import type CopilotPlugin from "../../main";
+import type { AIServiceManager as CopilotPlugin } from "../../app/AIServiceManager";
 
 type TabType = 'traces' | 'sdk-logs';
 type SortDirection = 'asc' | 'desc';

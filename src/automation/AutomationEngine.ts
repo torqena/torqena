@@ -38,7 +38,7 @@
 
 import { App, TFile, Notice } from 'obsidian';
 import { CronExpressionParser } from 'cron-parser';
-import type VaultCopilotPlugin from '../main';
+import type { AIServiceManager as VaultCopilotPlugin } from '../app/AIServiceManager';
 import {
 	AutomationInstance,
 	AutomationEngineState,

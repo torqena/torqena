@@ -29,7 +29,7 @@
  */
 
 import { App } from 'obsidian';
-import type VaultCopilotPlugin from '../main';
+import type { AIServiceManager as VaultCopilotPlugin } from '../app/AIServiceManager';
 import { getAutomationEngine } from './AutomationEngine';
 import { AutomationInstance, AutomationConfig } from './types';
 import { MarketplaceExtension } from '../extensions/types';

@@ -28,7 +28,7 @@
 
 import { App, Modal, ButtonComponent, TextComponent } from "obsidian";
 import type { ExtensionSubmissionData } from "../../types/extension-submission";
-import type VaultCopilotPlugin from "../../main";
+import type { AIServiceManager as VaultCopilotPlugin } from "../../app/AIServiceManager";
 import { GitHubSubmissionService } from "../../extensions/GitHubSubmissionService";
 
 // Import screen components

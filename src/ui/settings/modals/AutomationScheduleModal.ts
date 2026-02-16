@@ -15,7 +15,7 @@
 
 import { App, Modal, Setting } from 'obsidian';
 import type { AutomationInstance, AutomationConfig, ScheduleTrigger, AutomationAction } from '../../../automation/types';
-import type CopilotPlugin from '../../../main';
+import type { AIServiceManager as CopilotPlugin } from '../../../app/AIServiceManager';
 
 /** Frequency presets exposed in the UI */
 type Frequency = 'hour' | 'day' | 'week' | 'month';

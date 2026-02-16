@@ -45,6 +45,7 @@ import { FilesAndLinksSettingTab } from "../shell-settings/FilesAndLinksSettingT
 import { AppearanceSettingTab, applyTheme } from "../shell-settings/AppearanceSettingTab.js";
 import { KeychainSettingTab } from "../shell-settings/KeychainSettingTab.js";
 import { loadSettings, settingsChanged } from "../shell-settings/WebShellSettings.js";
+import { AIServiceManager } from "./AIServiceManager.js";
 
 /** @internal IndexedDB key for persisting the FileSystemDirectoryHandle (browser mode). */
 const DIR_HANDLE_KEY = "vault-copilot-dir-handle";
@@ -69,7 +70,7 @@ export class WebShellApp {
 	/** @internal */
 	private _app: InstanceType<typeof App>;
 	/** @internal */
-	private _plugin: any;
+	private _plugin: AIServiceManager;
 	/** @internal */
 	private _paneManager: PaneManager | null = null;
 	/** @internal */
@@ -81,7 +82,7 @@ export class WebShellApp {
 		vault: InstanceType<typeof Vault>,
 		workspace: InstanceType<typeof Workspace>,
 		app: InstanceType<typeof App>,
-		plugin: any,
+		plugin: AIServiceManager,
 	) {
 		this._vault = vault;
 		this._workspace = workspace;
@@ -100,8 +101,8 @@ export class WebShellApp {
 	/** The shim App instance. */
 	get app(): InstanceType<typeof App> { return this._app; }
 
-	/** The loaded CopilotPlugin instance. */
-	get plugin(): any { return this._plugin; }
+	/** The AI service manager instance. */
+	get plugin(): AIServiceManager { return this._plugin; }
 
 	/** The PaneManager instance (null until UI wiring). */
 	get paneManager(): PaneManager | null { return this._paneManager; }
@@ -187,13 +188,12 @@ export class WebShellApp {
 		app.registerBuiltInTab(new AppearanceSettingTab(app));
 		app.registerBuiltInTab(new KeychainSettingTab(app));
 
-		// ---- Load the plugin ----
-		console.log("[web-shell] Loading plugin...");
+		// ---- Initialize AI service manager ----
+		console.log("[web-shell] Initializing AI services...");
 
 		const isElectronShell = Boolean(window.electronAPI?.isElectron);
 		WebShellApp._ensureProviderDefaults(isElectronShell);
 
-		const CopilotPlugin = await WebShellApp._loadCopilotPlugin();
 		const manifest = {
 			id: "obsidian-vault-copilot",
 			name: "Vault Copilot",
@@ -202,9 +202,9 @@ export class WebShellApp {
 			isDesktopOnly: false,
 		};
 
-		const plugin = new CopilotPlugin(app, manifest);
-		await plugin.onload();
-		console.log("[web-shell] Plugin loaded successfully");
+		const plugin = new AIServiceManager(app, manifest);
+		await plugin.initialize();
+		console.log("[web-shell] AI services initialized successfully");
 
 		const instance = new WebShellApp(vault, workspace, app, plugin);
 
@@ -369,7 +369,6 @@ export class WebShellApp {
 				}
 			} catch { /* ignore */ }
 
-			const CopilotPlugin = await WebShellApp._loadCopilotPlugin();
 			const manifest = {
 				id: "obsidian-vault-copilot",
 				name: "Vault Copilot",
@@ -377,8 +376,8 @@ export class WebShellApp {
 				description: "AI assistant for your vault",
 				isDesktopOnly: false,
 			};
-			const plugin = new CopilotPlugin(app, manifest);
-			await plugin.onload();
+			const plugin = new AIServiceManager(app, manifest);
+			await plugin.initialize();
 
 			if (viewType === "ws-file-tab-view") {
 				if (!openFilePath) {
@@ -524,62 +523,6 @@ export class WebShellApp {
 		}
 	}
 
-	/**
-	 * Load the plugin module with a resilient retry path for transient Vite
-	 * dev-server stale-module fetch failures.
-	 * @internal
-	 */
-	private static async _loadCopilotPlugin(): Promise<any> {
-		const attempts: Array<{
-			label: string;
-			load: () => Promise<any>;
-		}> = [
-			{ label: "source extensionless specifier", load: () => import("../main") },
-		];
-
-		let lastError: unknown = null;
-		const maxPasses = 4;
-
-		for (let pass = 0; pass < maxPasses; pass += 1) {
-			for (let index = 0; index < attempts.length; index += 1) {
-				const attempt = attempts[index];
-				if (!attempt) continue;
-				try {
-					if (pass > 0 || index > 0) {
-						const retryDelayMs = 150 * (pass + 1);
-						await new Promise((resolve) => window.setTimeout(resolve, retryDelayMs));
-					}
-					const mod = await attempt.load();
-					const pluginCtor = WebShellApp._resolvePluginModuleExport(mod);
-					if (!pluginCtor) throw new Error(`Plugin module from ${attempt.label} has no default export`);
-					if (pass > 0 || index > 0) {
-						console.info(`[web-shell] Plugin module loaded via fallback (${attempt.label}, pass ${pass + 1}).`);
-					}
-					return pluginCtor;
-				} catch (error) {
-					lastError = error;
-					console.warn(`[web-shell] Plugin import attempt failed (${attempt.label}, pass ${pass + 1}).`, error);
-				}
-			}
-		}
-
-		throw lastError instanceof Error
-			? lastError
-			: new Error("Unable to load plugin module from all known specifiers.");
-	}
-
-	/**
-	 * Resolve plugin constructor across ESM/CJS interop boundaries.
-	 * @param mod - Imported plugin module namespace value
-	 * @returns Plugin constructor or undefined when unavailable
-	 * @internal
-	 */
-	private static _resolvePluginModuleExport(mod: any): any {
-		if (!mod) return undefined;
-		if (typeof mod.default === "function") return mod.default;
-		if (typeof mod.default?.default === "function") return mod.default.default;
-		return undefined;
-	}
 }
 
 

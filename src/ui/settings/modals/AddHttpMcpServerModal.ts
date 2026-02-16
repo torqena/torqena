@@ -24,7 +24,7 @@
  */
 
 import { App, Modal, Setting } from "obsidian";
-import type CopilotPlugin from "../../../main";
+import type { AIServiceManager as CopilotPlugin } from "../../../app/AIServiceManager";
 import { isMobile } from "../../../utils/platform";
 import type { McpServerSource } from "../../../ai/mcp/McpTypes";
 

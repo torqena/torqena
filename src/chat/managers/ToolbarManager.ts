@@ -13,7 +13,7 @@
  */
 
 import { Menu } from "obsidian";
-import CopilotPlugin from "../../main";
+import { AIServiceManager as CopilotPlugin } from "../../app/AIServiceManager";
 import { GitHubCopilotCliService } from "../../ai/providers/GitHubCopilotCliService";
 import { getAvailableModels, getModelDisplayName, CopilotSession, getProfileById } from "../../ui/settings";
 import { CachedAgentInfo } from "../../ai/customization/AgentCache";

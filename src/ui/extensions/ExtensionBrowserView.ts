@@ -13,7 +13,7 @@
 
 import { ItemView, WorkspaceLeaf, Menu, ViewStateResult } from "obsidian";
 import { setIcon } from "../../platform/utils/icons";
-import type CopilotPlugin from "../../main";
+import type { AIServiceManager as CopilotPlugin } from "../../app/AIServiceManager";
 import { ExtensionCatalogService } from "../../extensions/ExtensionCatalogService";
 import { ExtensionManager } from "../../extensions/ExtensionManager";
 import { MarketplaceExtension, VaultExtensionKind, BrowseFilter } from "../../extensions/types";

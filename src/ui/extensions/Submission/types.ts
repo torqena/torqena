@@ -14,7 +14,7 @@ import type {
 	ValidationResult,
 	ExtensionManifest,
 } from "../../../types/extension-submission";
-import type VaultCopilotPlugin from "../../../main";
+import type { AIServiceManager as VaultCopilotPlugin } from "../../../app/AIServiceManager";
 import type { App, TextComponent } from "obsidian";
 import type { CatalogEntryMetadata } from "./utils";
 

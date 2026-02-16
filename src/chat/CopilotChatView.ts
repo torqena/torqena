@@ -48,7 +48,7 @@
 import { ItemView, WorkspaceLeaf, Menu } from "obsidian";
 import { setIcon } from "../platform/utils/icons";
 import { GitHubCopilotCliService, ChatMessage } from "../ai/providers/GitHubCopilotCliService";
-import CopilotPlugin from "../main";
+import { AIServiceManager as CopilotPlugin } from "../app/AIServiceManager";
 import { CopilotSession, getVoiceServiceConfigFromProfile, getProfileById, OpenAIProviderProfile, AzureOpenAIProviderProfile, getOpenAIProfileApiKey, getAzureProfileApiKey, getLegacyOpenAIKey } from "../ui/settings";
 import { SessionPanel } from "./components/SessionPanel";
 import { CachedPromptInfo } from "../ai/customization/PromptCache";

@@ -14,7 +14,7 @@
  */
 
 import { App, Setting } from "obsidian";
-import CopilotPlugin from "../../../main";
+import { AIServiceManager as CopilotPlugin } from "../../../app/AIServiceManager";
 import { GitHubCopilotCliManager } from "../../../ai/providers/GitHubCopilotCliManager";
 import { ToolCatalog } from "../../../ai/tools/ToolCatalog";
 

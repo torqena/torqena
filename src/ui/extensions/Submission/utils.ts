@@ -10,7 +10,7 @@
 
 import { App, TFile, ButtonComponent } from "obsidian";
 import type { ExtensionManifest, ExtensionType } from "./types";
-import type VaultCopilotPlugin from "../../../main";
+import type { AIServiceManager as VaultCopilotPlugin } from "../../../app/AIServiceManager";
 import { normalizeVaultPath, toVaultRelativePath } from "../../../utils/pathUtils";
 
 /**

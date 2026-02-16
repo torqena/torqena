@@ -15,7 +15,7 @@ import { App, ItemView, Modal, WorkspaceLeaf } from "obsidian";
 import { setIcon } from "../../platform/utils/icons";
 import { Platform } from "../../platform/utils/platform";
 import { VoiceConversation, VoiceMessage } from "../../ui/settings";
-import type CopilotPlugin from "../../main";
+import type { AIServiceManager as CopilotPlugin } from "../../app/AIServiceManager";
 
 type SortField = 'date' | 'name' | 'messages';
 type SortOrder = 'asc' | 'desc';

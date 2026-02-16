@@ -14,7 +14,7 @@
  */
 
 import { App } from "obsidian";
-import CopilotPlugin from "../../main";
+import { AIServiceManager as CopilotPlugin } from "../../app/AIServiceManager";
 import { MainVaultAssistant, RealtimeAgentState, RealtimeHistoryItem, ToolApprovalRequest } from "../../ai/voice-chat";
 import { ChatMessage } from "../../ai/providers/GitHubCopilotCliService";
 import { getProfileById, OpenAIProviderProfile, getOpenAIProfileApiKey, getLegacyOpenAIKey } from "../../ui/settings";

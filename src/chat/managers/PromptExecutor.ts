@@ -14,7 +14,7 @@
  */
 
 import { App } from "obsidian";
-import CopilotPlugin from "../../main";
+import { AIServiceManager as CopilotPlugin } from "../../app/AIServiceManager";
 import { GitHubCopilotCliService, ChatMessage } from "../../ai/providers/GitHubCopilotCliService";
 import { CachedPromptInfo } from "../../ai/customization/PromptCache";
 import { PromptInputModal, parseInputVariables } from "../modals/PromptInputModal";

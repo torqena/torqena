@@ -13,7 +13,7 @@
 
 import { Menu } from "obsidian";
 import { setIcon } from "../../platform/utils/icons";
-import CopilotPlugin from "../../main";
+import { AIServiceManager as CopilotPlugin } from "../../app/AIServiceManager";
 import { CopilotSession } from "../../ui/settings";
 
 /**
