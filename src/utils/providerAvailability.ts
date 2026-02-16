@@ -30,10 +30,10 @@
 
 import type { App } from "obsidian";
 import type { CopilotPluginSettings, OpenAIProviderProfile, AzureOpenAIProviderProfile } from "../ui/settings/types";
-import type { GitHubCopilotCliManager } from "../copilot/providers/GitHubCopilotCliManager";
+import type { GitHubCopilotCliManager } from "../ai/providers/GitHubCopilotCliManager";
 import { isDesktop } from "./platform";
 import { getSecretValue } from "./secrets";
-import { getOpenAIApiKey } from "../copilot/providers/AIProvider";
+import { getOpenAIApiKey } from "../ai/providers/AIProvider";
 
 /**
  * Result of provider availability check.

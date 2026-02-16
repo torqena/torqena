@@ -2,87 +2,45 @@
 	"version": "2.0.0",
 	"tasks": [
 		{
-			"label": "Build and Deploy Plugin",
+			"label": "Dev (Electron + Vite)",
 			"type": "shell",
-			"command": "npm run build && node deploy.mjs",
+			"command": "npm run dev:electron",
+			"isBackground": true,
+			"group": "build"
+		},
+		{
+			"label": "Build (Electron)",
+			"type": "shell",
+			"command": "npm run build:electron",
 			"isBackground": false,
 			"group": "build"
 		},
 		{
-			"label": "Build with esbuild and Deploy",
+			"label": "Dev (Vite only)",
 			"type": "shell",
-			"command": "node esbuild.config.mjs production && node deploy.mjs",
+			"command": "npm run dev:shell",
+			"isBackground": true,
+			"group": "build"
+		},
+		{
+			"label": "Lint",
+			"type": "shell",
+			"command": "npm run lint",
 			"isBackground": false,
 			"group": "build"
 		},
 		{
-			"label": "Deploy Only (no build)",
+			"label": "Test",
 			"type": "shell",
-			"command": "node deploy.mjs",
-			"isBackground": false,
-			"group": "build"
-		},
-		{
-			"label": "Obsidian: Reload Plugin",
-			"type": "shell",
-			"command": "obsidian plugin:reload id=obsidian-vault-copilot",
-			"isBackground": false,
-			"group": "build"
-		},
-		{
-			"label": "Obsidian: Show JS Errors",
-			"type": "shell",
-			"command": "obsidian dev:errors",
+			"command": "npm test",
 			"isBackground": false,
 			"group": "test"
 		},
 		{
-			"label": "Obsidian: Show Console",
+			"label": "Test (watch)",
 			"type": "shell",
-			"command": "obsidian dev:console limit=100",
-			"isBackground": false,
-			"group": "test"
-		},
-		{
-			"label": "Obsidian: Take Screenshot",
-			"type": "shell",
-			"command": "obsidian dev:screenshot path=screenshot.png",
-			"isBackground": false,
-			"group": "test"
-		},
-		{
-			"label": "Obsidian: Toggle DevTools",
-			"type": "shell",
-			"command": "obsidian devtools",
-			"isBackground": false,
-			"group": "test"
-		},
-		{
-			"label": "Obsidian: Toggle Mobile Emulation",
-			"type": "shell",
-			"command": "obsidian dev:mobile on",
-			"isBackground": false,
-			"group": "test"
-		},
-		{
-			"label": "Obsidian: Plugin Info",
-			"type": "shell",
-			"command": "obsidian plugin id=obsidian-vault-copilot",
-			"isBackground": false,
-			"group": "test"
-		},
-		{
-			"label": "Obsidian: Capture Doc Screenshots",
-			"type": "shell",
-			"command": "node scripts/capture-screenshots.mjs --no-timestamp",
-			"isBackground": false,
-			"group": "test"
-		},
-		{
-			"label": "Obsidian: Capture Doc Screenshots (Mobile)",
-			"type": "shell",
-			"command": "node scripts/capture-screenshots.mjs --no-timestamp --mobile",
-			"isBackground": false,
+			"command": "npm run test:watch",
+			"isBackground": true,
 			"group": "test"
 		},
 		{
@@ -154,20 +112,6 @@
 			"options": {
 				"cwd": "${workspaceFolder}/azure-functions"
 			}
-		},
-		{
-			"label": "Obsidian: Debug On",
-			"type": "shell",
-			"command": "obsidian dev:debug on",
-			"isBackground": false,
-			"group": "test"
-		},
-		{
-			"label": "Web Shell: Relaunch Electron",
-			"type": "shell",
-			"command": "pwsh -NoProfile -ExecutionPolicy Bypass -File \"${workspaceFolder}/scripts/relaunch-web-shell.ps1\"",
-			"isBackground": false,
-			"group": "build"
 		}
 	]
 }

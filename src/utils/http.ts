@@ -1,14 +1,14 @@
 /**
  * @module Http
- * @description Cross-platform HTTP client for Obsidian.
+ * @description Cross-platform HTTP client.
  * 
- * This module provides HTTP utilities that work consistently across both
- * desktop and mobile platforms using Obsidian's built-in `requestUrl` API.
+ * This module provides HTTP utilities using the native `fetch` API,
+ * which works consistently across Electron and browser environments.
  * 
  * ## Why Use This Module
  * 
- * - **Cross-Platform**: Works on iOS, Android, and desktop
- * - **Consistent API**: Abstracts away platform differences
+ * - **Cross-Platform**: Works in Electron desktop and browsers
+ * - **Consistent API**: Simple, typed wrapper around fetch
  * - **Type-Safe**: Full TypeScript support with generics
  * - **Streaming Support**: SSE/streaming for real-time responses
  * 
@@ -48,8 +48,6 @@
  * @see {@link HttpMcpClient} for MCP-specific HTTP handling
  * @since 0.0.14
  */
-
-import { requestUrl, RequestUrlParam } from "obsidian";
 
 /**
  * HTTP request configuration options.
@@ -115,58 +113,67 @@ export interface HttpResponse<T = unknown> {
 export async function httpRequest<T = unknown>(
 	options: HttpRequestOptions
 ): Promise<HttpResponse<T>> {
-	const params: RequestUrlParam = {
-		url: options.url,
+	const body = typeof options.body === "object" 
+		? JSON.stringify(options.body) 
+		: options.body;
+
+	const fetchOptions: RequestInit = {
 		method: options.method || "GET",
 		headers: options.headers,
-		body: typeof options.body === "object" 
-			? JSON.stringify(options.body) 
-			: options.body,
-		throw: false,
+		body: body,
 	};
 
-	const response = await requestUrl(params);
+	// Add AbortController for timeout if specified
+	let controller: AbortController | undefined;
+	if (options.timeout) {
+		controller = new AbortController();
+		fetchOptions.signal = controller.signal;
+		setTimeout(() => controller?.abort(), options.timeout);
+	}
+
+	const response = await fetch(options.url, fetchOptions);
 
 	// Check for error status codes
 	if (response.status >= 400) {
-		throw new Error(`HTTP ${response.status}: ${response.text || 'Request failed'}`);
+		const errorText = await response.text();
+		throw new Error(`HTTP ${response.status}: ${errorText || 'Request failed'}`);
 	}
 
 	// Handle non-JSON responses gracefully
 	let data: unknown;
 	
 	// Check Content-Type header first to determine if we should expect JSON
-	const headers = response.headers || {};
-	const contentType = headers["content-type"] || headers["Content-Type"] || "";
-	const isJsonContentType = typeof contentType === "string" && contentType.includes("application/json");
+	const contentType = response.headers.get("content-type") || "";
+	const isJsonContentType = contentType.includes("application/json");
 	
 	if (isJsonContentType) {
 		// Content-Type indicates JSON - try to parse it
 		try {
-			// Safely attempt to access response.json (this may trigger parsing)
-			data = response.json;
-		} catch {
-			// If accessing .json fails, try parsing text manually
-			try {
-				data = JSON.parse(response.text);
-			} catch (parseError) {
-				// Parsing failed - provide helpful error
-				const preview = response.text.substring(0, 100);
-				throw new Error(
-					`Expected JSON response but received: "${preview}..." ` +
-					`(JSON parse error: ${parseError instanceof Error ? parseError.message : String(parseError)})`
-				);
-			}
+			data = await response.json();
+		} catch (parseError) {
+			// Parsing failed - provide helpful error
+			const text = await response.text();
+			const preview = text.substring(0, 100);
+			throw new Error(
+				`Expected JSON response but received: "${preview}..." ` +
+				`(JSON parse error: ${parseError instanceof Error ? parseError.message : String(parseError)})`
+			);
 		}
 	} else {
 		// Non-JSON content type - return text directly
-		data = response.text;
+		data = await response.text();
 	}
+
+	// Convert headers to record
+	const headersRecord: Record<string, string> = {};
+	response.headers.forEach((value, key) => {
+		headersRecord[key] = value;
+	});
 
 	return {
 		status: response.status,
 		data: data as T,
-		headers: response.headers,
+		headers: headersRecord,
 	};
 }
 

@@ -4,18 +4,18 @@ export default defineConfig({
 	test: {
 		globals: true,
 		environment: "node",
-		include: ["src/tests/**/*.test.ts"],
-		setupFiles: ["./src/tests/setup.ts"],
+		include: ["tests/**/*.test.ts"],
+		setupFiles: ["./tests/setup.ts"],
 		coverage: {
 			provider: "v8",
 			reporter: ["text", "json", "html"],
 			include: ["src/realtime-agent/**/*.ts"],
-			exclude: ["src/tests/**/*.ts", "src/realtime-agent/index.ts"],
+			exclude: ["tests/**/*.ts", "src/realtime-agent/index.ts"],
 		},
 	},
 	resolve: {
 		alias: {
-			obsidian: "./src/__mocks__/obsidian.ts",
+			obsidian: "./src/__mocks__/platform.ts",
 		},
 	},
 });

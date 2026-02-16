@@ -13,7 +13,7 @@
  * @since 0.0.15
  */
 
-import { CliStatus, GitHubCopilotCliManager } from "../../../copilot/providers/GitHubCopilotCliManager";
+import { CliStatus, GitHubCopilotCliManager } from "../../../ai/providers/GitHubCopilotCliManager";
 import { createCollapsibleSection, type SettingSectionContext } from "./SectionHelpers";
 
 /**

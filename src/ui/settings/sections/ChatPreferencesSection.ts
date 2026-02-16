@@ -11,8 +11,8 @@
  */
 
 import { Setting } from "obsidian";
-import { CliStatus } from "../../../copilot/providers/GitHubCopilotCliManager";
-import { CopilotChatView, COPILOT_VIEW_TYPE } from "../../ChatView";
+import { CliStatus } from "../../../ai/providers/GitHubCopilotCliManager";
+import { CopilotChatView, COPILOT_VIEW_TYPE } from "../../../chat";
 import { isMobile, isProviderAvailable } from "../../../utils/platform";
 import type {
 	OpenAIProviderProfile,
@@ -296,7 +296,7 @@ function renderProfileModelSelection(section: HTMLElement, ctx: SettingSectionCo
 						let models: string[] = [];
 						if (profile.type === 'openai') {
 							const apiKey = getOpenAIProfileApiKey(ctx.app, profile as OpenAIProviderProfile);
-							const service = ctx.plugin.openaiService || new (await import('../../../copilot/providers/OpenAIService')).OpenAIService(ctx.app, {
+							const service = ctx.plugin.openaiService || new (await import('../../../ai/providers/OpenAIService')).OpenAIService(ctx.app, {
 								provider: 'openai',
 								model: 'gpt-4o',
 								streaming: false,
@@ -307,7 +307,7 @@ function renderProfileModelSelection(section: HTMLElement, ctx: SettingSectionCo
 							models = await service.listModels();
 						} else if (profile.type === 'azure-openai') {
 							const apiKey = getAzureProfileApiKey(ctx.app, profile as AzureOpenAIProviderProfile);
-							const service = new (await import('../../../copilot/providers/AzureOpenAIService')).AzureOpenAIService(ctx.app, {
+							const service = new (await import('../../../ai/providers/AzureOpenAIService')).AzureOpenAIService(ctx.app, {
 								provider: 'azure-openai',
 								model: 'gpt-4o',
 								streaming: false,

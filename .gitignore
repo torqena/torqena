@@ -7,33 +7,20 @@
 # npm
 node_modules
 
-# Don't include the compiled main.js file in the repo.
-# They should be uploaded to GitHub releases instead.
-main.js
-
-# Don't include the bundled styles.css (built from src/styles/).
-/styles.css
+# Build artifacts
+dist/
+release/
 
 # Exclude sourcemaps
 *.map
 
-# obsidian
-data.json
-
 # Exclude macOS Finder (System Explorer) View States
 .DS_Store
-
-# Test vault plugin files (deployed, not committed)
-test-vault/.obsidian/plugins/obsidian-vault-copilot/main.js
-test-vault/.obsidian/plugins/obsidian-vault-copilot/styles.css
-test-vault/.obsidian/workspace.json
 
 # Test vault content (personal study materials)
 test-vault/Projects/MBA/
 test-vault/Daily Notes/
-test-vault/.obsidian/plugins/obsidian-vault-copilot/manifest.json
-
-test-vault/.obsidian/vault-copilot-extensions.json
+test-vault/.obsidian/workspace.json
 
 # Azure Functions build artifacts
 azure-functions/dist/

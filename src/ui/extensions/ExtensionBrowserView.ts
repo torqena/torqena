@@ -11,7 +11,8 @@
  * extensions from the marketplace catalog.
  */
 
-import { ItemView, WorkspaceLeaf, setIcon, Menu, ViewStateResult } from "obsidian";
+import { ItemView, WorkspaceLeaf, Menu, ViewStateResult } from "obsidian";
+import { setIcon } from "../../platform/utils/icons";
 import type CopilotPlugin from "../../main";
 import { ExtensionCatalogService } from "../../extensions/ExtensionCatalogService";
 import { ExtensionManager } from "../../extensions/ExtensionManager";
@@ -647,3 +648,4 @@ export class ExtensionBrowserView extends ItemView {
 		});
 	}
 }
+

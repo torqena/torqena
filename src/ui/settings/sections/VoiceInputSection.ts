@@ -149,7 +149,7 @@ function renderVoiceInputConditionalSettings(container: HTMLElement, ctx: Settin
 					try {
 						let models: string[] = [];
 						if (selectedProfile.type === 'openai') {
-							const OpenAIServiceModule = await import('../../../copilot/providers/OpenAIService');
+							const OpenAIServiceModule = await import('../../../ai/providers/OpenAIService');
 							const apiKey = getOpenAIProfileApiKey(ctx.app, selectedProfile as OpenAIProviderProfile);
 							const service = new OpenAIServiceModule.OpenAIService(ctx.app, {
 								provider: 'openai', model: 'gpt-4o', streaming: false, apiKey,
@@ -158,7 +158,7 @@ function renderVoiceInputConditionalSettings(container: HTMLElement, ctx: Settin
 							await service.initialize();
 							models = await service.listAudioModels();
 						} else if (selectedProfile.type === 'azure-openai') {
-							const AzureOpenAIServiceModule = await import('../../../copilot/providers/AzureOpenAIService');
+							const AzureOpenAIServiceModule = await import('../../../ai/providers/AzureOpenAIService');
 							const apiKey = getAzureProfileApiKey(ctx.app, selectedProfile as AzureOpenAIProviderProfile);
 							const service = new AzureOpenAIServiceModule.AzureOpenAIService(ctx.app, {
 								provider: 'azure-openai', model: 'gpt-4o', streaming: false, apiKey: apiKey || '',

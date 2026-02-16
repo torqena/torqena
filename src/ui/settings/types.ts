@@ -10,10 +10,10 @@
  * @since 0.0.1
  */
 
-import type { ChatMessage } from "../../copilot/providers/GitHubCopilotCliService";
-import type { AIProviderType } from "../../copilot/providers/AIProvider";
-import type { RealtimeToolConfig } from "../../copilot/voice-chat";
-import type { CliStatus } from "../../copilot/providers/GitHubCopilotCliManager";
+import type { ChatMessage } from "../../ai/providers/GitHubCopilotCliService";
+import type { AIProviderType } from "../../ai/providers/AIProvider";
+import type { RealtimeToolConfig } from "../../ai/voice-chat";
+import type { CliStatus } from "../../ai/providers/GitHubCopilotCliManager";
 
 // ============================================================================
 // Session Types

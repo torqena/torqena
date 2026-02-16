@@ -30,7 +30,7 @@
  * @since 0.1.0
  */
 
-import { requestUrl } from 'obsidian';
+import { httpRequest } from '../utils/http';
 
 /* ------------------------------------------------------------------ */
 /*  Interfaces                                                        */
@@ -463,18 +463,16 @@ export class ExtensionAnalyticsService {
             headers['X-User-Hash'] = this.authenticatedUserHash;
         }
 
-        const response = await requestUrl({
-            url,
+        const response = await fetch(url, {
             method: options.method,
             headers,
             body: options.body,
-            throw: false,
         });
 
         if (response.status >= 400) {
             let errorMessage: string;
             try {
-                const body = response.json;
+                const body = await response.json();
                 errorMessage = body?.error ?? `HTTP ${response.status}`;
             } catch {
                 errorMessage = `HTTP ${response.status}`;
@@ -484,10 +482,15 @@ export class ExtensionAnalyticsService {
 
         // For void-returning endpoints the server may return 204 No Content.
         // In that case there is no JSON body to parse.
-        if (response.status === 204 || !response.text) {
+        if (response.status === 204) {
             return undefined as unknown as T;
         }
 
-        return response.json as T;
+        const text = await response.text();
+        if (!text) {
+            return undefined as unknown as T;
+        }
+
+        return JSON.parse(text) as T;
     }
 }

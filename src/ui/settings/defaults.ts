@@ -9,7 +9,7 @@
  * @since 0.0.1
  */
 
-import { DEFAULT_TOOL_CONFIG } from "../../copilot/voice-chat";
+import { DEFAULT_TOOL_CONFIG } from "../../ai/voice-chat";
 import type {
 	CopilotPluginSettings,
 	PeriodicNotesSettings,

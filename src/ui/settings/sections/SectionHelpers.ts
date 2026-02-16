@@ -15,8 +15,8 @@
 
 import { App, Setting } from "obsidian";
 import CopilotPlugin from "../../../main";
-import { GitHubCopilotCliManager } from "../../../copilot/providers/GitHubCopilotCliManager";
-import { ToolCatalog } from "../../../copilot/tools/ToolCatalog";
+import { GitHubCopilotCliManager } from "../../../ai/providers/GitHubCopilotCliManager";
+import { ToolCatalog } from "../../../ai/tools/ToolCatalog";
 
 /**
  * Shared context passed to each section renderer function.

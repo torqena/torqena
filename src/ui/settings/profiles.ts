@@ -10,7 +10,7 @@
  */
 
 import { App } from "obsidian";
-import { getOpenAIApiKey } from "../../copilot/providers/AIProvider";
+import { getOpenAIApiKey } from "../../ai/providers/AIProvider";
 import { getSecretValue } from "../../utils/secrets";
 import type {
 	CopilotPluginSettings,

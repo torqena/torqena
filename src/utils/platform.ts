@@ -41,7 +41,7 @@
  * @since 0.0.14
  */
 
-import { Platform } from "obsidian";
+import { Platform } from "../platform/utils/platform";
 
 /**
  * Whether the current platform is mobile (iOS or Android).
@@ -162,3 +162,4 @@ export function getMcpTransports(): ("stdio" | "http")[] {
 export function supportsLocalProcesses(): boolean {
 	return isDesktop;
 }
+

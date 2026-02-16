@@ -14,7 +14,7 @@
  */
 
 import { Setting } from "obsidian";
-import { ToolPickerModal } from "../../ChatView";
+import { ToolPickerModal } from "../../../chat";
 import { createCollapsibleSection, type SettingSectionContext } from "./SectionHelpers";
 
 /**

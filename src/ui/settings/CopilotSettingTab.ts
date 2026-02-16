@@ -17,9 +17,9 @@
 
 import { App, PluginSettingTab } from "obsidian";
 import CopilotPlugin from "../../main";
-import { GitHubCopilotCliManager, CliStatus } from "../../copilot/providers/GitHubCopilotCliManager";
-import { ToolCatalog } from "../../copilot/tools/ToolCatalog";
-import { CopilotChatView, COPILOT_VIEW_TYPE } from "../ChatView";
+import { GitHubCopilotCliManager, CliStatus } from "../../ai/providers/GitHubCopilotCliManager";
+import { ToolCatalog } from "../../ai/tools/ToolCatalog";
+import { CopilotChatView, COPILOT_VIEW_TYPE } from "../../chat";
 import { isDesktop } from "../../utils/platform";
 import { getProfileById, getProfileTypeDisplayName } from "./profiles";
 

@@ -11,7 +11,7 @@
  * showing detailed information like full description, publisher, links, and categories.
  */
 
-import { setIcon } from "obsidian";
+import { setIcon } from "../../platform/utils/icons";
 import { MarketplaceExtension } from "../../extensions/types";
 
 /**
@@ -278,3 +278,4 @@ export class ExtensionHoverPopup {
 		});
 	}
 }
+

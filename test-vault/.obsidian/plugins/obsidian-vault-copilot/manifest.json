@@ -1,0 +1,10 @@
+{
+  "id": "obsidian-vault-copilot",
+  "name": "Vault Copilot",
+  "version": "0.0.26",
+  "minAppVersion": "0.15.0",
+  "description": "Vault Copilot brings AI assistance into Obsidian by connecting to your GitHub Copilot account, enabling chat, note operations, extensible skills, MCP tools, and advanced workflows powered by the Copilot CLI SDK.",
+  "author": "Dan Shue",
+  "authorUrl": "https://github.com/danshue",
+  "isDesktopOnly": false
+}

@@ -13,7 +13,7 @@
 import { Setting } from "obsidian";
 import type { OpenAIProviderProfile } from "../types";
 import { getProfileById, getOpenAIProfiles, getOpenAIProfileApiKey } from "../profiles";
-import { RealtimeVoice, TurnDetectionMode, DEFAULT_TOOL_CONFIG } from "../../../copilot/voice-chat";
+import { RealtimeVoice, TurnDetectionMode, DEFAULT_TOOL_CONFIG } from "../../../ai/voice-chat";
 import { FileSuggest } from "../../FileSuggest";
 import { createCollapsibleSection, type SettingSectionContext } from "./SectionHelpers";
 
@@ -202,7 +202,7 @@ function renderRealtimeModelSelection(section: HTMLElement, ctx: SettingSectionC
 				button.setDisabled(true);
 				console.log("Loading realtime models...");
 				try {
-					const OpenAIServiceModule = await import('../../../copilot/providers/OpenAIService');
+					const OpenAIServiceModule = await import('../../../ai/providers/OpenAIService');
 					const apiKey = getOpenAIProfileApiKey(ctx.app, profile);
 					const service = new OpenAIServiceModule.OpenAIService(ctx.app, {
 						provider: 'openai', model: 'gpt-4o', streaming: false, apiKey,

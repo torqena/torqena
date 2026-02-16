@@ -26,7 +26,7 @@
 import { App, Modal, Setting } from "obsidian";
 import type CopilotPlugin from "../../../main";
 import { isMobile } from "../../../utils/platform";
-import type { McpServerSource } from "../../../copilot/mcp/McpTypes";
+import type { McpServerSource } from "../../../ai/mcp/McpTypes";
 
 /**
  * Modal for manually adding HTTP MCP servers.

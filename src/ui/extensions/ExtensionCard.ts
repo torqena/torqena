@@ -11,7 +11,7 @@
  * including its icon, name, description, categories, and action buttons.
  */
 
-import { setIcon } from "obsidian";
+import { setIcon } from "../../platform/utils/icons";
 import { MarketplaceExtension, VaultExtensionKind } from "../../extensions/types";
 import { ExtensionHoverPopup } from "./ExtensionHoverPopup";
 
@@ -287,3 +287,4 @@ export class ExtensionCardComponent {
 		return iconMapping[kind] || "file";
 	}
 }
+

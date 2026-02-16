@@ -48,12 +48,12 @@
 
 import { Plugin } from "obsidian";
 import { DEFAULT_SETTINGS, CopilotPluginSettings, CopilotSettingTab, COPILOT_SETTINGS_TABS, CopilotSession, AIProviderProfile, generateProfileId, OpenAIProviderProfile, AzureOpenAIProviderProfile, getProfileById, getOpenAIProfileApiKey, getAzureProfileApiKey, getLegacyOpenAIKey } from "./ui/settings";
-import { GitHubCopilotCliService, GitHubCopilotCliConfig, ChatMessage, ModelInfoResult, ModelCapabilitiesInfo, ModelPolicyInfo } from "./copilot/providers/GitHubCopilotCliService";
-import { CopilotChatView, COPILOT_VIEW_TYPE, ConversationHistoryView, TracingView, TRACING_VIEW_TYPE, VOICE_HISTORY_VIEW_TYPE } from "./ui/ChatView";
+import { GitHubCopilotCliService, GitHubCopilotCliConfig, ChatMessage, ModelInfoResult, ModelCapabilitiesInfo, ModelPolicyInfo } from "./ai/providers/GitHubCopilotCliService";
+import { CopilotChatView, COPILOT_VIEW_TYPE, ConversationHistoryView, TracingView, TRACING_VIEW_TYPE, VOICE_HISTORY_VIEW_TYPE } from "./chat";
 import { ExtensionBrowserView, EXTENSION_BROWSER_VIEW_TYPE } from "./ui/extensions/ExtensionBrowserView";
 import { ExtensionWebView, EXTENSION_WEB_VIEW_TYPE } from "./ui/extensions/ExtensionWebView";
 import { ExtensionSubmissionModal } from "./ui/extensions/ExtensionSubmissionModal";
-import { GitHubCopilotCliManager } from "./copilot/providers/GitHubCopilotCliManager";
+import { GitHubCopilotCliManager } from "./ai/providers/GitHubCopilotCliManager";
 import { 
 	SkillRegistry, 
 	getSkillRegistry, 
@@ -62,21 +62,21 @@ import {
 	SkillResult,
 	McpServerConfig,
 	SkillRegistryEvent
-} from "./copilot/customization/SkillRegistry";
-import { McpManager } from "./copilot/mcp/McpManager";
-import { AgentCache, CachedAgentInfo } from "./copilot/customization/AgentCache";
-import { CustomizationLoader } from "./copilot/customization/CustomizationLoader";
-import { PromptCache, CachedPromptInfo } from "./copilot/customization/PromptCache";
-import { SkillCache, CachedSkillInfo } from "./copilot/customization/SkillCache";
-import { CustomPrompt } from "./copilot/customization/CustomizationLoader";
-import { OpenAIService } from "./copilot/providers/OpenAIService";
-import { AzureOpenAIService } from "./copilot/providers/AzureOpenAIService";
-import { AIProviderType, AIProvider } from "./copilot/providers/AIProvider";
-import { getTracingService } from "./copilot/TracingService";
-import { MainVaultAssistant } from "./copilot/realtime-agent/MainVaultAssistant";
+} from "./ai/customization/SkillRegistry";
+import { McpManager } from "./ai/mcp/McpManager";
+import { AgentCache, CachedAgentInfo } from "./ai/customization/AgentCache";
+import { CustomizationLoader } from "./ai/customization/CustomizationLoader";
+import { PromptCache, CachedPromptInfo } from "./ai/customization/PromptCache";
+import { SkillCache, CachedSkillInfo } from "./ai/customization/SkillCache";
+import { CustomPrompt } from "./ai/customization/CustomizationLoader";
+import { OpenAIService } from "./ai/providers/OpenAIService";
+import { AzureOpenAIService } from "./ai/providers/AzureOpenAIService";
+import { AIProviderType, AIProvider } from "./ai/providers/AIProvider";
+import { getTracingService } from "./ai/TracingService";
+import { MainVaultAssistant } from "./ai/realtime-agent/MainVaultAssistant";
 import { isMobile, supportsLocalProcesses } from "./utils/platform";
 import { expandHomePath } from "./utils/pathUtils";
-import * as VaultOps from "./copilot/tools/VaultOperations";
+import * as VaultOps from "./ai/tools/VaultOperations";
 import { loadAuthorInfo } from "./ui/extensions/Submission/utils";
 
 /**

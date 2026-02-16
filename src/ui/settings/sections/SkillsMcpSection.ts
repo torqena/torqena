@@ -11,10 +11,10 @@
  */
 
 import { Setting } from "obsidian";
-import { SkillInfo, McpServerConfig } from "../../../copilot/customization/SkillRegistry";
-import { CachedSkillInfo } from "../../../copilot/customization/SkillCache";
-import { DiscoveredMcpServer, isStdioConfig, McpConnectionStatus, McpServerSource } from "../../../copilot/mcp/McpTypes";
-import { getSourceLabel, getSourceIcon } from "../../../copilot/mcp/McpManager";
+import { SkillInfo, McpServerConfig } from "../../../ai/customization/SkillRegistry";
+import { CachedSkillInfo } from "../../../ai/customization/SkillCache";
+import { DiscoveredMcpServer, isStdioConfig, McpConnectionStatus, McpServerSource } from "../../../ai/mcp/McpTypes";
+import { getSourceLabel, getSourceIcon } from "../../../ai/mcp/McpManager";
 import { isMobile } from "../../../utils/platform";
 import { AddHttpMcpServerModal } from "../modals";
 import { createCollapsibleSection, type SettingSectionContext } from "./SectionHelpers";

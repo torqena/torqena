@@ -1,19 +1,44 @@
-# Obsidian community plugin
+# Torqena
 
 ## Project overview
 
-- Target: Obsidian Community Plugin (TypeScript → bundled JavaScript).
-- Entry point: `main.ts` compiled to `main.js` and loaded by Obsidian.
-- Required release artifacts: `main.js`, `manifest.json`, and optional `styles.css`.
+- Target: Desktop application (Electron 40 + Vite 5 + TypeScript).
+- Architecture: Three-layer Electron app — main process, preload bridge, Vite-bundled renderer.
+- Structure: Flat layout — `electron/` (main process), `src/` (renderer + features), `tests/` (test suites).
+- Release artifacts: Platform installers (Windows NSIS, macOS DMG, Linux AppImage) packaged by electron-builder.
+
+```
+┌───────────────────────────────────────────┐
+│ Electron Main Process (electron/)         │
+│  ├── WindowManager (main + child windows) │
+│  ├── ProcessManager (MCP stdio servers)   │
+│  ├── FS IPC handlers (read/write/list)    │
+│  ├── Secrets (safeStorage encrypted)      │
+│  └── Shell exec/spawn                     │
+├───────────────────────────────────────────┤
+│ Preload (contextBridge → electronAPI)     │
+├───────────────────────────────────────────┤
+│ Renderer (Vite + native web APIs)         │
+│  ├── WebShellApp (lifecycle controller)   │
+│  ├── LayoutManager (3-column workspace)   │
+│  ├── PaneManager (tabbed editor panes)    │
+│  ├── EditorManager (CodeMirror 6)         │
+│  └── Feature code (src/)                  │
+│     ├── AI providers & MCP               │
+│     ├── Chat UI, settings, extensions    │
+│     └── Automation, tools, voice         │
+└───────────────────────────────────────────┘
+```
 
 ## Environment & tooling
 
-- Node.js: use current LTS (Node 18+ recommended).
-- **Package manager: npm** (required for this sample - `package.json` defines npm scripts and dependencies).
-- **Bundler: esbuild** (required for this sample - `esbuild.config.mjs` and build scripts depend on it). Alternative bundlers like Rollup or webpack are acceptable for other projects if they bundle all external dependencies into `main.js`.
-- Types: `obsidian` type definitions.
-
-**Note**: This sample project has specific technical dependencies on npm and esbuild. If you're creating a plugin from scratch, you can choose different tools, but you'll need to replace the build configuration accordingly.
+- **Runtime**: Electron 40 (Chromium renderer + Node.js main process).
+- **Bundler**: Vite 5 — builds the renderer app. Config at `vite.config.ts` (root).
+- **Package manager**: npm (single package, no workspaces).
+- **Editor**: CodeMirror 6 (full markdown editing with live preview, syntax highlighting, frontmatter support).
+- **Packaging**: electron-builder — produces platform-specific installers to `release/`.
+- **Types**: TypeScript 5.8+ with strict mode.
+- **Testing**: Vitest 4 at the root level. Tests in `tests/`.
 
 ### Install
 
@@ -23,62 +48,159 @@
 npm install
 ```
 
-### Dev (watch)
+### Development (Electron + Vite hot reload)
 
 ```bash
-npm run dev
+npm run dev:electron
 ```
+
+This runs Vite dev server and Electron concurrently. The renderer hot-reloads on file changes. In dev mode, `F5` reloads the window and `Ctrl+Shift+I` opens DevTools.
 
 ### Production build
 
 ```bash
-npm run build
+npm run build:electron
 ```
+
+Builds the renderer via Vite, then packages the Electron app via electron-builder. Output goes to `release/`.
+
+### Scripts
+
+| Script | Command | Purpose |
+|--------|---------|---------|
+| `npm run dev` | `node esbuild.config.mjs` | Dev build (Obsidian plugin, if applicable) |
+| `npm run dev:shell` | `vite` | Vite dev server only (renderer at localhost:5173) |
+| `npm run dev:electron` | `concurrently "vite" "wait-on ... && electron ."` | Full Electron dev mode with hot reload |
+| `npm run build` | `tsc && esbuild` | Build (type-check + bundle) |
+| `npm run build:shell` | `vite build` | Build renderer to `dist/` |
+| `npm run build:electron` | `vite build && electron-builder` | Build + package desktop app |
+| `npm run lint` | `eslint .` | Lint all source files |
+| `npm test` | `vitest run` | Run tests once |
+| `npm run test:watch` | `vitest` | Run tests in watch mode |
+| `npm run test:coverage` | `vitest run --coverage` | Run tests with coverage report |
+| `npm run electron` | `electron electron/main.cjs` | Launch Electron only (Vite must be running) |
 
 ## Linting
 
-- To use eslint install eslint from terminal: `npm install -g eslint`
-- To use eslint to analyze this project use this command: `eslint main.ts`
-- eslint will then create a report with suggestions for code improvement by file and line number.
-- If your source code is in a folder, such as `src`, you can use eslint with this command to analyze all files in that folder: `eslint ./src/`
+- ESLint config at `eslint.config.mts`.
+- To lint all source files: `npm run lint`
+- To lint a specific folder: `npx eslint ./src/`
+
+## Key conventions
+
+- **Split large files**: Keep files under ~200-300 lines.
+- **Single responsibility**: Each file/module has one well-defined purpose.
+- **Do not commit**: `node_modules/`, `dist/`, `release/`.
+- **CSS**: Component files in `src/styles/`, imported into `styles.css`.
 
 ## File & folder conventions
 
-- **Organize code into multiple files**: Split functionality across separate modules rather than putting everything in `main.ts`.
-- Source lives in `src/`. Keep `main.ts` small and focused on plugin lifecycle (loading, unloading, registering commands).
-- **Example file structure**:
-  ```
-  src/
-    main.ts           # Plugin entry point, lifecycle management
-    settings.ts       # Settings interface and defaults
-    commands/         # Command implementations
-      command1.ts
-      command2.ts
-    ui/              # UI components, modals, views
-      modal.ts
-      view.ts
-    utils/           # Utility functions, helpers
-      helpers.ts
-      constants.ts
-    types.ts         # TypeScript interfaces and types
-  ```
-- **Do not commit build artifacts**: Never commit `node_modules/`, `main.js`, `styles.css`, or other generated files to version control.
-- Keep the plugin small. Avoid large dependencies. Prefer browser-compatible packages.
-- Generated output should be placed at the plugin root or `dist/` depending on your build setup. Release artifacts must end up at the top level of the plugin folder in the vault (`main.js`, `manifest.json`, `styles.css`).
+### Folder structure
+
+```
+torqena/
+├── electron/                       # Main process (Node.js)
+│   ├── main.cjs                    # App entry, IPC wiring
+│   ├── preload.cjs                 # contextBridge → window.electronAPI
+│   ├── WindowManager.cjs           # BrowserWindow lifecycle
+│   └── ProcessManager.cjs          # Child process management
+│
+├── src/                            # Renderer (Vite-bundled, runs in Chromium)
+│   ├── index.html                  # HTML entry
+│   ├── shell-main.ts               # Renderer bootstrap (Vite entry)
+│   │
+│   ├── app/                        # App lifecycle controller
+│   │   └── WebShellApp.ts
+│   │
+│   ├── ai/                         # AI provider system
+│   │   ├── providers/              # AIProvider base, Copilot, OpenAI, Azure
+│   │   ├── mcp/                    # MCP manager, stdio + HTTP clients
+│   │   ├── tools/                  # Tool definitions, vault operations
+│   │   ├── customization/          # Skills, agents, prompts
+│   │   ├── voice-chat/             # Voice input support
+│   │   ├── realtime-agent/         # Real-time agent
+│   │   ├── bases/                  # Document database views
+│   │   └── TracingService.ts       # SDK diagnostics
+│   │
+│   ├── chat/                       # Chat feature
+│   │   ├── components/             # ChatView, message renderers, input area
+│   │   ├── managers/               # Session, input, voice managers
+│   │   ├── modals/                 # Tracing, history, tool picker
+│   │   └── processing/             # Message processing pipeline
+│   │
+│   ├── editor/                     # CodeMirror 6 integration
+│   │   ├── EditorManager.ts
+│   │   ├── PaneManager.ts
+│   │   ├── FrontmatterService.ts
+│   │   ├── LivePreviewPlugin.ts
+│   │   └── MarkedExtensions.ts
+│   │
+│   ├── layout/                     # Shell layout, sidebar, resize handles
+│   │   └── LayoutManager.ts
+│   │
+│   ├── automation/                 # Scheduled/triggered workflows
+│   ├── extensions/                 # Extension manager, catalog, marketplace
+│   │
+│   ├── shell-settings/             # Shell-specific settings tabs
+│   ├── ui/                         # UI components
+│   │   ├── settings/               # Settings tabs and sections
+│   │   ├── extensions/             # Extension browser UI
+│   │   └── mcp-apps/               # MCP app rendering
+│   │
+│   ├── native/                     # Native API implementations (obsidian shim)
+│   │   ├── core/                   # App, Plugin, Component
+│   │   ├── dom/                    # DOM extensions
+│   │   ├── ui/                     # Modal, Notice, Menu, Setting
+│   │   ├── vault/                  # Vault, TFile, TFolder
+│   │   ├── workspace/              # Workspace, View, Leaf
+│   │   └── utils/                  # Platform, icons, YAML
+│   │
+│   ├── stubs/                      # IPC-backed Node.js API stubs
+│   │   ├── fs.ts, path.ts          # Filesystem
+│   │   ├── child_process.ts        # Process spawning
+│   │   └── ...                     # crypto, http, https, net, os, util
+│   │
+│   ├── utils/                      # Pure utility functions
+│   ├── types/                      # TypeScript interfaces
+│   ├── styles/                     # Modular CSS files
+│   └── __mocks__/                  # Test mocks
+│
+├── tests/                          # Test suites (mirrors src/ structure)
+│   ├── automation/
+│   ├── copilot/
+│   ├── extensions/
+│   ├── realtime-agent/
+│   ├── ui/
+│   ├── utils/
+│   ├── smoke/
+│   └── setup.ts
+│
+├── dist/                           # Vite build output (renderer)
+├── release/                        # electron-builder output (installers)
+│
+├── package.json                    # Single package (no workspaces)
+├── vite.config.ts                  # Vite config (root)
+├── tsconfig.json
+├── vitest.config.ts
+├── eslint.config.mts
+└── AGENTS.md
+```
+
+**Key principles**:
+- **Feature-first** — `ai/`, `chat/`, `editor/`, `automation/`, `extensions/` are self-contained domains.
+- **Flat top-level** — No monorepo. `electron/` and `src/` at the root.
+- **Native shim** — `src/platform/` provides implementations for `"obsidian"` imports.
+- **Tests mirror source** — `tests/` structure parallels `src/`.
 
 ### CSS architecture
 
-Styles are split into modular component files under `src/styles/` and bundled by esbuild into a single `styles.css` at the project root. The entry point is `src/styles/styles.css`, which uses CSS `@import` statements to include each component file.
+Styles are split into modular component files under `src/styles/` and bundled by Vite. The entry point is `src/styles/styles.css`. Base theme and CSS custom properties are in `src/theme.css`.
 
-- **Entry point**: `src/styles/styles.css` — imports all component files
-- **Build**: esbuild resolves `@import` statements and bundles everything into one minified `styles.css`
-- **Do not edit the root `styles.css`** — it is a generated build artifact. Edit the component files in `src/styles/` instead.
-
-**Component files** (`src/styles/`):
+**Component styles** (`src/styles/`):
 
 | File | Purpose |
 |------|---------|
-| `editor-selection.css` | Editor text selection preservation (inactive highlight) |
+| `automations.css` | Automation engine UI |
 | `chat.css` | Chat container and header layout |
 | `welcome.css` | Welcome message and capabilities card |
 | `messages.css` | Message styles, errors, thinking indicator |
@@ -88,7 +210,7 @@ Styles are split into modular component files under `src/styles/` and bundled by
 | `statusbar.css` | Status bar, scrollbar, settings help |
 | `settings.css` | Settings tab sections, buttons, CLI status |
 | `session-panel.css` | Session panel, layout wrapper, rename modal |
-| `tool-picker.css` | Tool picker modal (VS Code style) |
+| `tool-picker.css` | Tool picker modal |
 | `skills-mcp.css` | Skills and MCP server tables |
 | `directory-list.css` | Directory list UI |
 | `prompt-picker.css` | Prompt picker dropdown |
@@ -100,302 +222,196 @@ Styles are split into modular component files under `src/styles/` and bundled by
 | `tool-approval.css` | Tool approval prompt |
 | `prompt-input.css` | Prompt input modal |
 | `whisper.css` | Whisper.cpp settings section |
-| `mobile.css` | Mobile-specific overrides |
 | `extensions.css` | Extension marketplace, cards, submission wizard |
 
-When adding new styles, create a new component file in `src/styles/` and add an `@import` to `src/styles/styles.css`.
+When adding new styles, create a component file in `src/styles/` and import it from `src/styles/styles.css`.
 
-## Manifest rules (`manifest.json`)
+## Electron architecture
 
-- Must include (non-exhaustive):  
-  - `id` (plugin ID; for local dev it should match the folder name)  
-  - `name`  
-  - `version` (Semantic Versioning `x.y.z`)  
-  - `minAppVersion`  
-  - `description`  
-  - `isDesktopOnly` (boolean)  
-  - Optional: `author`, `authorUrl`, `fundingUrl` (string or map)
-- Never change `id` after release. Treat it as stable API.
-- Keep `minAppVersion` accurate when using newer APIs.
-- Canonical requirements are coded here: https://github.com/obsidianmd/obsidian-releases/blob/master/.github/workflows/validate-plugin-entry.yml
+### Main process (`electron/`)
 
-## Testing
+The main process runs in Node.js and handles privileged operations via IPC:
 
-- Manual install for testing: copy `main.js`, `manifest.json`, `styles.css` (if any) to:
-  ```
-  <Vault>/.obsidian/plugins/<plugin-id>/
-  ```
-- Reload Obsidian and enable the plugin in **Settings → Community plugins**.
+- **`main.cjs`** — Orchestrator. Wires IPC handlers for filesystem, secrets, platform info, and shell operations. Delegates window and process management to dedicated modules.
+- **`WindowManager.cjs`** — Creates and manages BrowserWindows. Supports frameless titlebar (hidden frame with overlay on Windows), child pop-out windows with `?view=` query params, tab docking from child windows back to main.
+- **`ProcessManager.cjs`** — Manages spawned child processes for MCP stdio servers. Tracks active processes by ID, routes stdout/stderr/close/error events to the renderer.
 
-## Obsidian CLI (v1.12+)
+### Preload (`electron/preload.cjs`)
 
-Obsidian 1.12 introduced a CLI for controlling Obsidian from the terminal. This project integrates the CLI into the build/deploy workflow. The CLI requires Obsidian 1.12+ with the CLI enabled in **Settings → General → Command line interface** and a [Catalyst license](https://help.obsidian.md/catalyst) during early access.
+Exposes safe APIs to the renderer via `contextBridge` as `window.electronAPI`. TypeScript declarations in `src/electron-api.d.ts`.
 
-### Setup (Windows)
-1. Download `Obsidian.com` from the `#insider-desktop-release` channel on the Obsidian Discord.
-2. Place it in the Obsidian install directory (e.g. `C:\Users\<user>\AppData\Local\Programs\obsidian\`).
-3. Enable CLI in Obsidian: **Settings → General → Command line interface**.
-4. Restart your terminal for PATH changes.
+### IPC surface (`window.electronAPI`)
 
-### Build → Deploy → Reload workflow
+| Category | Methods |
+|----------|---------|
+| **Shell** | `exec`, `spawn`, `stdin`, `kill`, `onStdout`, `onStderr`, `onClose`, `onError` |
+| **Filesystem** | `readFile`, `writeFile`, `exists`, `listFilesRecursive`, `readdir`, `remove`, `mkdir` |
+| **Secrets** | `saveSecret`, `loadSecret`, `deleteSecret`, `listSecrets`, `isSecretStorageAvailable` |
+| **Window** | `openDirectory`, `setWindowFrame`, `getWindowFrame`, `setTitleBarOverlay`, `openWindow`, `dockTab`, `onDockTab` |
+| **Platform** | `getPlatformInfo` |
 
-The `deploy.mjs` script now automatically reloads the plugin via CLI after copying files:
+### Renderer (`src/`)
 
-```bash
-npm run build:deploy   # Build, deploy to test-vault, and reload in Obsidian
-npm run deploy         # Deploy and reload (skip build)
-npm run deploy:no-reload  # Deploy without reloading (CLI unavailable or not wanted)
-```
+The renderer is a Vite-bundled web app that uses standard DOM APIs, CodeMirror 6 for editing, and `window.electronAPI` for privileged operations. Entry point is `src/shell-main.ts`.
 
-### Developer commands (npm scripts)
+### Node.js API stubs (`src/stubs/`)
 
-| Script | Command | Purpose |
-|--------|---------|---------|
-| `npm run plugin:reload` | `obsidian plugin:reload id=obsidian-vault-copilot` | Hot-reload the plugin |
-| `npm run plugin:info` | `obsidian plugin id=obsidian-vault-copilot` | Show plugin status/info |
-| `npm run dev:errors` | `obsidian dev:errors` | Show captured JS errors |
-| `npm run dev:console` | `obsidian dev:console limit=100` | Show console messages |
-| `npm run dev:screenshot` | `obsidian dev:screenshot path=screenshot.png` | Take a quick screenshot |
-| `npm run dev:screenshot:docs` | Captures all plugin views | Screenshots for documentation |
-| `npm run dev:screenshot:docs:mobile` | Captures all views in mobile mode | Mobile screenshots for documentation |
-| `npm run dev:mobile` | `obsidian dev:mobile on` | Enable mobile emulation |
-| `npm run dev:mobile:off` | `obsidian dev:mobile off` | Disable mobile emulation |
+IPC-backed stubs for Node.js built-ins used by feature code. These redirect Node API calls through the Electron IPC bridge so code that uses `fs`, `path`, `child_process`, etc. works in the renderer:
 
-### Documentation screenshots
+`child_process.ts`, `crypto.ts`, `fs.ts`, `fs_promises.ts`, `http.ts`, `https.ts`, `net.ts`, `os.ts`, `path.ts`, `util.ts`
 
-The `scripts/capture-screenshots.mjs` script automates capturing screenshots of each plugin view for documentation. Screenshots are saved to `docs/images/screenshots/`.
+Vite aliases these modules to the stubs at build time via `vite.config.ts`.
 
-```bash
-# Capture all plugin screens (overwrites existing)
-npm run dev:screenshot:docs
+## Native API approach
 
-# Capture in mobile emulation mode
-npm run dev:screenshot:docs:mobile
+Torqena uses **raw web APIs** and Electron's IPC bridge — no abstraction frameworks.
 
-# Capture a specific view only
-node scripts/capture-screenshots.mjs chat --no-timestamp
-node scripts/capture-screenshots.mjs settings --no-timestamp
+### Target API surface
 
-# Capture with timestamps (for visual regression tracking)
-node scripts/capture-screenshots.mjs
-```
+| Need | Solution |
+|------|----------|
+| **DOM manipulation** | Standard DOM APIs (`document.createElement`, `classList`, `addEventListener`, etc.) |
+| **Markdown editing** | CodeMirror 6 (direct integration, no wrappers) |
+| **File I/O** | `window.electronAPI.readFile/writeFile/exists/readdir/remove/mkdir` |
+| **Process spawning** | `window.electronAPI.spawn/stdin/kill` with event listeners |
+| **Secret storage** | `window.electronAPI.saveSecret/loadSecret/deleteSecret` (Electron `safeStorage` encrypted) |
+| **HTTP requests** | `fetch` API (renderer has full network access) |
+| **Data persistence** | `localStorage` for settings, filesystem for vault data |
+| **YAML parsing** | `js-yaml` (direct import) |
+| **Icons** | `lucide` icons (direct import) |
+| **Window management** | `window.electronAPI.openWindow/dockTab` |
 
-Available targets: `chat`, `settings`, `extension-browser`. New targets can be added to the `SCREENSHOT_TARGETS` array in the script.
+### Migration from legacy imports
 
-### Developer commands (direct CLI)
+The shared feature code in `src/` currently imports from `"obsidian"`. These imports are being migrated to native APIs. During the transition, Vite aliases `"obsidian"` → the shim package. The target state is zero `import ... from "obsidian"` statements — all code uses native DOM, `window.electronAPI`, or direct library imports.
 
-```bash
-# Toggle Electron DevTools
-obsidian devtools
+## AI providers
 
-# Run JS in the app context (useful for debugging)
-obsidian eval code="app.vault.getFiles().length"
-
-# Inspect DOM elements
-obsidian dev:dom selector=".workspace-leaf-content" total
-
-# Inspect CSS with source locations
-obsidian dev:css selector=".chat-container" prop=background
-
-# Attach Chrome DevTools Protocol debugger
-obsidian dev:debug on
-
-# Run a CDP command
-obsidian dev:cdp method=Runtime.evaluate params='{"expression":"1+1"}'
-
-# Show captured console at specific log level
-obsidian dev:console level=error
-```
-
-### VS Code tasks
-
-The following Obsidian CLI tasks are available via **Terminal → Run Task**:
-
-- **Obsidian: Reload Plugin** — reload the plugin without rebuilding
-- **Obsidian: Show JS Errors** — view captured JavaScript errors
-- **Obsidian: Show Console** — view recent console output
-- **Obsidian: Take Screenshot** — save a screenshot to `screenshot.png`
-- **Obsidian: Toggle DevTools** — open/close Electron DevTools
-- **Obsidian: Toggle Mobile Emulation** — test mobile layout
-- **Obsidian: Plugin Info** — check plugin status
-- **Obsidian: Capture Doc Screenshots** — capture all plugin views for documentation
-- **Obsidian: Capture Doc Screenshots (Mobile)** — same, in mobile emulation mode
-
-## AI Providers
-
-Vault Copilot supports multiple AI providers for chat functionality:
+Torqena supports multiple AI providers:
 
 ### GitHub Copilot (Primary)
 - **Provider Type**: `copilot`
 - **Requirements**: GitHub Copilot subscription and CLI installed
+- **Implementation**: `src/ai/providers/GitHubCopilotCliService.ts`
 - **Features**: 
   - Full GitHub Copilot CLI SDK integration
   - Agent Skills support
-  - MCP (Model Context Protocol) via StdioMcpClient
+  - MCP via StdioMcpClient
   - Multiple models (GPT-4.1, GPT-5-mini, Claude, Gemini, etc.)
   - Context-aware vault operations
-- **Model Selection**: Available in Settings → Chat Preferences
-- **Configuration**: Settings → Connection Status
 
 ### OpenAI
 - **Provider Type**: `openai`
 - **Requirements**: OpenAI API key
+- **Implementation**: `src/ai/providers/OpenAIService.ts`
 - **Features**:
-  - Direct OpenAI API access
-  - Chat completions with streaming
+  - Direct OpenAI API access with streaming
   - Tool/function calling support
-  - MCP tool integration (via McpManager)
-  - Custom model selection
+  - MCP tool integration via McpManager
 - **Models**: gpt-4o, gpt-4o-mini, gpt-4-turbo, gpt-4, gpt-3.5-turbo, o1, o1-mini, o1-preview, o3-mini
-- **Configuration**: Create an AI Provider Profile in Settings → AI Provider Profiles
-  - Profile Name: Descriptive name
-  - Provider Type: OpenAI
-  - API Key: Your OpenAI API key (or set OPENAI_API_KEY env var)
-  - Base URL (optional): Custom API endpoint
-  - Chat Model (optional): Specific model for chat (e.g., gpt-4o)
-  - Whisper Model (optional): Model for voice transcription
 
 ### Azure OpenAI
 - **Provider Type**: `azure-openai`
 - **Requirements**: Azure OpenAI resource and API key
+- **Implementation**: `src/ai/providers/AzureOpenAIService.ts`
 - **Features**:
-  - Azure OpenAI API access
-  - Chat completions with streaming
+  - Azure OpenAI API access with streaming
   - Tool/function calling support
-  - MCP tool integration (via McpManager)
+  - MCP tool integration via McpManager
   - Deployment-based model selection
-- **Configuration**: Create an AI Provider Profile in Settings → AI Provider Profiles
-  - Profile Name: Descriptive name
-  - Provider Type: Azure OpenAI
-  - API Key: Your Azure OpenAI API key (or set AZURE_OPENAI_KEY env var)
-  - Endpoint: Your Azure OpenAI endpoint (e.g., https://your-resource.openai.azure.com)
-  - Chat Deployment Name (optional): Deployment for chat model (e.g., gpt-4o)
-  - Whisper Deployment Name (optional): Deployment for voice transcription
-  - API Version (optional): Defaults to 2024-06-01
 
-### Provider Selection
-- **Location**: Settings → Chat Preferences → Chat Provider dropdown
-- **Options**:
-  - GitHub Copilot (default)
-  - Any configured OpenAI or Azure OpenAI profile
-- **Switching Providers**: Auto-reconnects when changed
+### Provider architecture
+- **Base Abstraction**: `AIProvider` abstract class (`src/ai/providers/AIProvider.ts`)
+  - Common interface: `initialize()`, `sendMessage()`, `sendMessageStreaming()`, `abort()`, `isReady()`, `destroy()`
+  - Tools management: `setTools()`, `convertMcpToolsToToolDefinitions()`
+  - History management: `getMessageHistory()`, `clearHistory()`
+- **Factory**: `AIProviderFactory` (`src/ai/providers/AIProviderFactory.ts`) — creates providers based on user configuration
+- **Configuration**: Settings UI allows selecting provider and entering API keys/endpoints
 
 ### Model Context Protocol (MCP)
-- **Stdio MCP (Desktop Only)**: Via `StdioMcpClient` (src/copilot/StdioMcpClient.ts)
-  - Spawns local MCP server processes
+
+- **Stdio MCP**: Via `StdioMcpClient` (`src/ai/mcp/StdioMcpClient.ts`)
+  - Spawns local MCP server processes via `window.electronAPI.spawn`
   - Configured in `.github/copilot-mcp-servers.json`
-  - Requires Node.js child_process (desktop only)
-- **HTTP MCP (Cross-Platform)**: Via `HttpMcpClient` (src/copilot/HttpMcpClient.ts)
+  - Process lifecycle managed by Electron's `ProcessManager`
+- **HTTP MCP**: Via `HttpMcpClient` (`src/ai/mcp/HttpMcpClient.ts`)
   - Connects to remote MCP servers over HTTP/HTTPS
   - Uses JSON-RPC 2.0 protocol
-  - Works on both desktop and mobile
-  - Uses Obsidian's `requestUrl` for cross-platform HTTP
-- **MCP Manager**: Coordinates both transport types
-  - Managed by `McpManager` (src/copilot/McpManager.ts)
-  - Exposes tools as function/tool calls to AI providers
-  - Same tools available across all providers for consistency
-
-### Provider Architecture
-- **Base Abstraction**: `AIProvider` abstract class (src/copilot/AIProvider.ts)
-  - Common interface for all providers
-  - Methods: initialize(), sendMessage(), sendMessageStreaming(), abort(), isReady(), destroy()
-  - Tools management: setTools(), convertMcpToolsToToolDefinitions()
-  - History management: getMessageHistory(), clearHistory()
-- **Implementation Classes**:
-  - `GitHubCopilotCliService`: GitHub Copilot CLI SDK integration (src/copilot/GitHubCopilotCliService.ts)
-  - `OpenAIService`: OpenAI API integration (src/copilot/OpenAIService.ts)
-  - `AzureOpenAIService`: Azure OpenAI API integration (src/copilot/AzureOpenAIService.ts)
-- **Provider Initialization**: main.ts handles provider selection and initialization based on user configuration
+- **MCP Manager**: `McpManager` (`src/ai/mcp/McpManager.ts`) coordinates both transport types and exposes tools to all AI providers
 
 ## Utilities
 
-### Platform Detection (src/utils/platform.ts)
-- `isMobile` / `isDesktop`: Platform detection constants
-- `getAvailableProviders()`: Returns AI providers available on current platform
-- `getMcpTransports()`: Returns MCP transport types available on current platform
-- `supportsLocalProcesses()`: Check if platform can spawn local processes
+### Secret storage
+- API keys stored securely via Electron's `safeStorage` encryption
+- Accessed through `window.electronAPI.saveSecret/loadSecret/deleteSecret/listSecrets`
 
-### SecretStorage (src/utils/secrets.ts)
-- `getSecretValue(app, secretId)`: Safely read secrets from Obsidian's SecretStorage
-- Used for secure API key storage
-- Returns undefined if secret not set or unavailable
+### HTTP requests
+- Use the `fetch` API directly in the renderer
+- Full network access available (no CORS proxy needed for most APIs)
 
-### HTTP Utilities (src/utils/http.ts)
-- `httpRequest()`: Cross-platform HTTP requests using Obsidian's `requestUrl`
-- Works on both desktop and mobile
-- Used by `HttpMcpClient` for MCP over HTTP
+### Diagnostics & tracing
 
-## Diagnostics & Tracing
+- **TracingService** (`src/ai/TracingService.ts`) — captures SDK logs, prompts, responses, and events
+- **Pop-out windows** — diagnostics and voice history can open in separate windows via `window.electronAPI.openWindow`
 
-### TracingService (src/copilot/TracingService.ts)
-- Captures SDK logs, prompts, responses, and events
-- Singleton pattern via `getTracingService()`
-- Supports trace spans and events for debugging
+## Testing
 
-### Pop-out Windows
-- `openTracingPopout(app)`: Open diagnostics in a pop-out window (desktop) or modal (mobile)
-- `openVoiceHistoryPopout(app)`: Open voice conversation history in a pop-out window
-- Located in src/ui/ChatView/TracingModal.ts and ConversationHistoryModal.ts
-
-## Commands & settings
-
-- Any user-facing commands should be added via `this.addCommand(...)`.
-- If the plugin has configuration, provide a settings tab and sensible defaults.
-- Persist settings using `this.loadData()` / `this.saveData()`.
-- Use stable command IDs; avoid renaming once released.
-
-## Versioning & releases
-
-- Bump `version` in `manifest.json` (SemVer) and update `versions.json` to map plugin version → minimum app version.
-- Create a GitHub release whose tag exactly matches `manifest.json`'s `version`. Do not use a leading `v`.
-- Attach `manifest.json`, `main.js`, and `styles.css` (if present) to the release as individual assets.
-- After the initial release, follow the process to add/update your plugin in the community catalog as required.
+- **Framework**: Vitest 4 with V8 coverage
+- **Test location**: `tests/`
+- **Commands**:
+  ```bash
+  npm test              # Run all tests
+  npm run test:watch    # Watch mode
+  npm run test:coverage # With coverage report
+  ```
 
 ## Security, privacy, and compliance
 
-Follow Obsidian's **Developer Policies** and **Plugin Guidelines**. In particular:
-
 - Default to local/offline operation. Only make network requests when essential to the feature.
 - No hidden telemetry. If you collect optional analytics or call third-party services, require explicit opt-in and document clearly in `README.md` and in settings.
-- Never execute remote code, fetch and eval scripts, or auto-update plugin code outside of normal releases.
-- Minimize scope: read/write only what's necessary inside the vault. Do not access files outside the vault.
+- Never execute remote code, fetch and eval scripts, or auto-update app code outside of normal releases.
+- Minimize scope: read/write only what's necessary inside the user's vault directory.
 - Clearly disclose any external services used, data sent, and risks.
 - Respect user privacy. Do not collect vault contents, filenames, or personal information unless absolutely necessary and explicitly consented.
-- Avoid deceptive patterns, ads, or spammy notifications.
-- Register and clean up all DOM, app, and interval listeners using the provided `register*` helpers so the plugin unloads safely.
+- Secrets are encrypted at rest using Electron's `safeStorage` API.
+- The preload script uses `contextBridge` to expose only specific, safe APIs to the renderer — never expose the full `ipcRenderer`.
 
 ## UX & copy guidelines (for UI text, commands, settings)
 
 - Prefer sentence case for headings, buttons, and titles.
 - Use clear, action-oriented imperatives in step-by-step copy.
 - Use **bold** to indicate literal UI labels. Prefer "select" for interactions.
-- Use arrow notation for navigation: **Settings → Community plugins**.
+- Use arrow notation for navigation: **Settings → Appearance**.
 - Keep in-app strings short, consistent, and free of jargon.
 
 ## Performance
 
-- Keep startup light. Defer heavy work until needed.
-- Avoid long-running tasks during `onload`; use lazy initialization.
-- Batch disk access and avoid excessive vault scans.
+- Keep startup light. Defer heavy work until the app is interactive.
+- Lazy-load CodeMirror extensions and heavy libraries (mermaid, katex) on first use.
+- Batch filesystem access and avoid excessive directory scans.
 - Debounce/throttle expensive operations in response to file system events.
+- Minimize IPC round-trips by batching operations where possible.
 
 ## Coding conventions
 
-- TypeScript with `"strict": true` preferred.
-- **Keep `main.ts` minimal**: Focus only on plugin lifecycle (onload, onunload, addCommand calls). Delegate all feature logic to separate modules.
-- **Split large files**: If any file exceeds ~200-300 lines, consider breaking it into smaller, focused modules.
+- TypeScript with `"strict": true`.
+- **ES2022** target, **ESNext** modules, **bundler** module resolution.
+- **Split large files**: If any file exceeds ~200-300 lines, break it into smaller, focused modules.
 - **Use clear module boundaries**: Each file should have a single, well-defined responsibility.
-- Bundle everything into `main.js` (no unbundled runtime deps).
-- Avoid Node/Electron APIs if you want mobile compatibility; set `isDesktopOnly` accordingly.
 - Prefer `async/await` over promise chains; handle errors gracefully.
+- Use standard DOM APIs directly — no abstraction layers for element creation.
+- Access Node.js capabilities exclusively through `window.electronAPI` in the renderer.
+- CJS format required for Electron main process files (`.cjs` extension).
 
 ## Documentation standards
 
-** All source code files should have a standardized header comment **
+**All source code files should have a standardized header comment:**
+```
 /*---------------------------------------------------------------------------------------------
  *  Copyright (c) Dan Shue. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
+```
 
 **All code must include comprehensive JSDoc documentation.** When touching any file, examine it and add/update documentation as needed.
 
@@ -410,7 +426,7 @@ Follow Obsidian's **Developer Policies** and **Plugin Guidelines**. In particula
 | `@example` | All public functions | Runnable code snippet |
 | `@throws` | Functions that throw errors | `@throws {Error} If file not found` |
 | `@see` | Cross-references | `@see {@link parseTaskLine}` |
-| `@since` | New APIs | `@since 0.0.14` |
+| `@since` | New APIs | `@since 0.1.0` |
 | `@deprecated` | Deprecated APIs | `@deprecated Use newMethod instead` |
 | `@internal` | Private helpers | Mark non-exported functions |
 
@@ -433,7 +449,7 @@ Follow Obsidian's **Developer Policies** and **Plugin Guidelines**. In particula
  * ```
  * 
  * @see {@link RelatedModule} for related functionality
- * @since 0.0.14
+ * @since 0.1.0
  */
 ```
 
@@ -473,141 +489,114 @@ Follow Obsidian's **Developer Policies** and **Plugin Guidelines**. In particula
 - [ ] Cross-references added with `@see` where helpful
 - [ ] Examples are runnable and accurate
 
-## Mobile
+## Versioning & releases
 
-- Where feasible, test on iOS and Android.
-- Don't assume desktop-only behavior unless `isDesktopOnly` is `true`.
-- Avoid large in-memory structures; be mindful of memory and storage constraints.
-
-### Platform Detection
-Use the platform utilities (src/utils/platform.ts) for cross-platform compatibility:
-```ts
-import { isMobile, isDesktop, getAvailableProviders, getMcpTransports, supportsLocalProcesses } from "./utils/platform";
-
-// Check platform
-if (isMobile) {
-  // Mobile-specific behavior
-}
-
-// Get available AI providers for current platform
-const providers = getAvailableProviders();
-// Desktop: ["copilot", "openai", "azure-openai"]
-// Mobile: ["openai", "azure-openai"] (no CLI-based Copilot)
-
-// Get available MCP transports
-const transports = getMcpTransports();
-// Desktop: ["stdio", "http"]
-// Mobile: ["http"] (no local process spawning)
-```
-
-### Mobile Limitations
-- **GitHub Copilot CLI**: Not available on mobile (requires local process spawning)
-- **Stdio MCP servers**: Not available on mobile (use HTTP MCP instead)
-- **Voice input**: May have platform-specific limitations
+- Version is in `package.json` (SemVer `x.y.z`).
+- Create a GitHub release whose tag matches the version. Do not use a leading `v`.
+- electron-builder produces platform-specific installers in `release/`.
+- Attach installers to the GitHub release.
 
 ## Agent do/don't
 
 **Do**
-- Add commands with stable IDs (don't rename once released).
+- Use `window.electronAPI` for all privileged operations (filesystem, secrets, process spawning).
 - Provide defaults and validation in settings.
-- Write idempotent code paths so reload/unload doesn't leak listeners or intervals.
-- Use `this.register*` helpers for everything that needs cleanup.
+- Clean up event listeners and intervals on teardown.
+- Use the IPC surface defined in `electron-api.d.ts` — don't add IPC channels without updating the type declarations.
 
 **Don't**
+- Import Node.js modules directly in renderer code — use the IPC stubs or `window.electronAPI`.
 - Introduce network calls without an obvious user-facing reason and documentation.
 - Ship features that require cloud services without clear disclosure and explicit opt-in.
-- Store or transmit vault contents unless essential and consented.
+- Expose `ipcRenderer` or other Electron internals to the renderer process.
+- Store secrets in plaintext — always use `window.electronAPI.saveSecret`.
 
 ## Common tasks
 
-### Organize code across multiple files
+### Read/write files in the vault
 
-**main.ts** (minimal, lifecycle only):
 ```ts
-import { Plugin } from "obsidian";
-import { MySettings, DEFAULT_SETTINGS } from "./settings";
-import { registerCommands } from "./commands";
+// Read a file
+const content = await window.electronAPI.readFile(filePath, "utf-8");
 
-export default class MyPlugin extends Plugin {
-  settings: MySettings;
+// Write a file
+await window.electronAPI.writeFile(filePath, content);
 
-  async onload() {
-    this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
-    registerCommands(this);
-  }
-}
+// Check if file exists
+const exists = await window.electronAPI.exists(filePath);
+
+// List directory contents
+const entries = await window.electronAPI.readdir(dirPath);
+// entries: Array<{ name: string; kind: "file" | "directory" }>
 ```
 
-**settings.ts**:
-```ts
-export interface MySettings {
-  enabled: boolean;
-  apiKey: string;
-}
+### Spawn a child process (e.g., MCP server)
 
-export const DEFAULT_SETTINGS: MySettings = {
-  enabled: true,
-  apiKey: "",
-};
+```ts
+const { id, pid } = await window.electronAPI.spawn("node", ["server.js"], { cwd: "/path" });
+
+// Listen for output
+const removeStdout = window.electronAPI.onStdout(id, (data) => console.log(data));
+const removeStderr = window.electronAPI.onStderr(id, (data) => console.error(data));
+const removeClose = window.electronAPI.onClose(id, (code) => console.log("exited:", code));
+
+// Send input
+await window.electronAPI.stdin(id, "some input\n");
+
+// Kill the process
+await window.electronAPI.kill(id);
+
+// Clean up listeners
+removeStdout();
+removeStderr();
+removeClose();
 ```
 
-**commands/index.ts**:
-```ts
-import { Plugin } from "obsidian";
-import { doSomething } from "./my-command";
+### Store and retrieve secrets
 
-export function registerCommands(plugin: Plugin) {
-  plugin.addCommand({
-    id: "do-something",
-    name: "Do something",
-    callback: () => doSomething(plugin),
-  });
-}
+```ts
+// Save a secret (encrypted via safeStorage)
+await window.electronAPI.saveSecret("openai-api-key", apiKey);
+
+// Load a secret
+const key = await window.electronAPI.loadSecret("openai-api-key");
+
+// List all secrets (metadata only, no values)
+const secrets = await window.electronAPI.listSecrets();
 ```
 
-### Add a command
+### Open a pop-out window
 
 ```ts
-this.addCommand({
-  id: "your-command-id",
-  name: "Do the thing",
-  callback: () => this.doTheThing(),
+const { windowId } = await window.electronAPI.openWindow("tracing", {
+  width: 800,
+  height: 600,
+  title: "Diagnostics",
 });
 ```
 
 ### Persist settings
 
 ```ts
-interface MySettings { enabled: boolean }
-const DEFAULT_SETTINGS: MySettings = { enabled: true };
-
-async onload() {
-  this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
-  await this.saveData(this.settings);
-}
-```
-
-### Register listeners safely
-
-```ts
-this.registerEvent(this.app.workspace.on("file-open", f => { /* ... */ }));
-this.registerDomEvent(window, "resize", () => { /* ... */ });
-this.registerInterval(window.setInterval(() => { /* ... */ }, 1000));
+// Settings stored in localStorage
+const settings = JSON.parse(localStorage.getItem("torqena-settings") || "{}");
+settings.theme = "dark";
+localStorage.setItem("torqena-settings", JSON.stringify(settings));
 ```
 
 ## Troubleshooting
 
-- Plugin doesn't load after build: ensure `main.js` and `manifest.json` are at the top level of the plugin folder under `<Vault>/.obsidian/plugins/<plugin-id>/`. 
-- Build issues: if `main.js` is missing, run `npm run build` or `npm run dev` to compile your TypeScript source code.
-- Commands not appearing: verify `addCommand` runs after `onload` and IDs are unique.
-- Settings not persisting: ensure `loadData`/`saveData` are awaited and you re-render the UI after changes.
-- Mobile-only issues: confirm you're not using desktop-only APIs; check `isDesktopOnly` and adjust.
+- **App doesn't start**: Ensure `npm install` has run. Check that Vite dev server is running before launching Electron in split mode.
+- **Blank window in dev**: Vite must be serving at `http://localhost:5173`. Run `npm run dev:electron` for the concurrent workflow.
+- **IPC errors**: Verify the method exists in `electron/preload.cjs` and is declared in `src/electron-api.d.ts`. Check the main process console for errors.
+- **Build fails**: Run `npm run build:shell` first to verify the renderer builds. Then `npm run build:electron` for the full package.
+- **Secrets not persisting**: Electron `safeStorage` requires the OS keychain. On Linux, ensure `libsecret` is installed.
 
 ## References
 
-- Obsidian sample plugin: https://github.com/obsidianmd/obsidian-sample-plugin
-- API documentation: https://docs.obsidian.md
-- Developer policies: https://docs.obsidian.md/Developer+policies
-- Plugin guidelines: https://docs.obsidian.md/Plugins/Releasing/Plugin+guidelines
-- Style guide: https://help.obsidian.md/style-guide
+- Electron documentation: https://www.electronjs.org/docs
+- Vite documentation: https://vite.dev/
+- CodeMirror 6: https://codemirror.net/
+- electron-builder: https://www.electron.build/
 - GitHub Copilot CLI SDK: https://github.com/github/copilot-sdk/blob/main/nodejs/README.md
+

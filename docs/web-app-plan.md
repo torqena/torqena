@@ -4,7 +4,7 @@
 
 Vault Copilot is an Obsidian plugin tightly coupled to Obsidian across 93 source files. This plan describes how to build a **compatibility shim** — a separate package that re-implements Obsidian's API surface using standard web APIs — so the existing plugin code runs as a standalone web app with minimal source changes.
 
-The key technique: at build time, Vite aliases `"obsidian"` to our shim package. This is the same pattern already proven by our test infrastructure (`vitest.config.ts` aliases `obsidian` to `src/__mocks__/obsidian.ts`). The production shim is a full-fidelity version of that test mock.
+The key technique: at build time, Vite aliases `"obsidian"` to our shim package. This is the same pattern already proven by our test infrastructure (`vitest.config.ts` aliases `obsidian` to `src/__mocks__/platform.ts`). The production shim is a full-fidelity version of that test mock.
 
 **Goals**:
 - Zero import changes to existing `src/` files
@@ -187,7 +187,7 @@ class TFolder extends TAbstractFile {
 }
 ```
 
-Reference implementation: `src/__mocks__/obsidian.ts:7-45`
+Reference implementation: `src/__mocks__/platform.ts:7-45`
 
 #### Events System
 
@@ -696,7 +696,7 @@ function parseYaml(str: string): any {
 }
 ```
 
-Reference: `src/__mocks__/obsidian.ts:286-432` has a hand-rolled implementation; the production shim should use `js-yaml` instead.
+Reference: `src/__mocks__/platform.ts:286-432` has a hand-rolled implementation; the production shim should use `js-yaml` instead.
 
 #### normalizePath
 
@@ -967,7 +967,7 @@ Only 3-4 files need minor changes. No architectural refactoring.
 
 ## Verification Strategy
 
-1. **Conformance test**: Every export from `src/__mocks__/obsidian.ts` must exist in the shim's `index.ts`. Write a test that imports both and verifies all keys are present.
+1. **Conformance test**: Every export from `src/__mocks__/platform.ts` must exist in the shim's `index.ts`. Write a test that imports both and verifies all keys are present.
 
 2. **Unit tests**: Each shim module tested independently:
    - DOM extensions: Verify `createDiv`, `empty`, `addClass` produce correct DOM
@@ -983,7 +983,7 @@ Only 3-4 files need minor changes. No architectural refactoring.
 
 4. **Visual test**: Load the chat view in the web shell, verify it renders and can send messages via OpenAI provider.
 
-5. **Existing test reuse**: Switch `vitest.config.ts` alias from `src/__mocks__/obsidian.ts` to the shim package. All existing tests should pass — this is the strongest compatibility signal.
+5. **Existing test reuse**: Switch `vitest.config.ts` alias from `src/__mocks__/platform.ts` to the shim package. All existing tests should pass — this is the strongest compatibility signal.
 
 ---
 
@@ -993,7 +993,7 @@ When implementing, these files should be studied closely:
 
 | File | Why |
 |---|---|
-| `src/__mocks__/obsidian.ts` | API shape blueprint — the shim must be a superset of this mock |
+| `src/__mocks__/platform.ts` | API shape blueprint — the shim must be a superset of this mock |
 | `src/main.ts` | Plugin entry point exercising Plugin.onload(), registerView(), addCommand(), addRibbonIcon(), loadData()/saveData() |
 | `src/copilot/tools/VaultOperations.ts` | Most intensive Vault API consumer — exercises read, cachedRead, modify, create, append, trash, getAbstractFileByPath, getMarkdownFiles, getFiles |
 | `src/ui/ChatView/CopilotChatView.ts` | Largest UI component — exercises ItemView, setIcon, Menu, workspace, DOM helpers (createDiv/createEl) |
@@ -1002,3 +1002,4 @@ When implementing, these files should be studied closely:
 | `src/utils/secrets.ts` | Secrets API that needs shimming |
 | `vitest.config.ts` | Proves the alias pattern works (line 17-19) |
 | `esbuild.config.mjs` | Existing build — marks `"obsidian"` as external; must continue to work |
+

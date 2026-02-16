@@ -11,7 +11,7 @@
  */
 
 import { Setting, FileSystemAdapter } from "obsidian";
-import { WhisperCppManager, WHISPER_MODELS, WhisperServerStatus } from "../../../copilot/voice-chat/whisper/WhisperCppManager";
+import { WhisperCppManager, WHISPER_MODELS, WhisperServerStatus } from "../../../ai/voice-chat/whisper/WhisperCppManager";
 import { createCollapsibleSection, type SettingSectionContext } from "./SectionHelpers";
 
 /**

@@ -536,7 +536,7 @@ await withClient(async (client) => {
 9. **Use systemMessage with mode: "append"** to preserve safety guardrails
 10. **Handle both delta and final events** when streaming is enabled
 11. **Leverage TypeScript types** for compile-time safety
-12. **Write unit tests for new code** - Every new module, function, or feature should have corresponding tests in `src/tests/`
+12. **Write unit tests for new code** - Every new module, function, or feature should have corresponding tests in `tests/`
 
 ## Common Patterns
 
@@ -721,7 +721,7 @@ console.log(message.data.content);
 
 ### Test-Driven Development
 
-**Always write unit tests when adding new code.** After implementing a new module, function, or feature, create corresponding tests in `src/tests/` before considering the work complete. This ensures:
+**Always write unit tests when adding new code.** After implementing a new module, function, or feature, create corresponding tests in `tests/` before considering the work complete. This ensures:
 
 - Code behaves as expected
 - Regressions are caught early
@@ -730,7 +730,7 @@ console.log(message.data.content);
 
 ### Test Framework
 
-This project uses **Vitest** for unit testing. All unit tests are stored in the `src/tests/` folder.
+This project uses **Vitest** for unit testing. All unit tests are stored in the `tests/` folder.
 
 ### Running Tests
 
@@ -750,17 +750,16 @@ npm run test:coverage
 Organize tests to mirror the source code structure:
 
 ```
-src/
-  tests/
-    realtime-agent/
-      types.test.ts
-      workarounds.test.ts
-      tool-manager.test.ts
-    copilot/
-      CopilotService.test.ts
-      McpManager.test.ts
-    ui/
-      ChatView.test.ts
+tests/
+  realtime-agent/
+    types.test.ts
+    workarounds.test.ts
+    tool-manager.test.ts
+  copilot/
+    CopilotService.test.ts
+    McpManager.test.ts
+  ui/
+    ChatView.test.ts
 ```
 
 ### Test File Naming
@@ -824,14 +823,14 @@ expect(spy).toHaveBeenCalledWith("expected message");
 
 ### Mocking Obsidian API
 
-The project includes a mock for the Obsidian API at `src/__mocks__/obsidian.ts`. This is automatically resolved via the Vitest config alias:
+The project includes a mock for the Obsidian API at `src/__mocks__/platform.ts`. This is automatically resolved via the Vitest config alias:
 
 ```typescript
 // vitest.config.ts
 export default defineConfig({
   test: {
     alias: {
-      obsidian: path.resolve(__dirname, "src/__mocks__/obsidian.ts"),
+      obsidian: path.resolve(__dirname, "src/__mocks__/platform.ts"),
     },
   },
 });
@@ -963,3 +962,5 @@ export default defineConfig({
 8. **Restore mocks after tests** - Call `vi.restoreAllMocks()` to prevent test pollution
 9. **Test both success and failure paths** - Verify error handling and edge cases
 10. **Keep tests fast** - Avoid real network calls, file I/O, or long timeouts in unit tests
+
+

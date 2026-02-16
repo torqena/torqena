@@ -12,7 +12,7 @@
  */
 
 import { FileSystemAdapter } from "obsidian";
-import { GitHubCopilotCliManager } from "../../../copilot/providers/GitHubCopilotCliManager";
+import { GitHubCopilotCliManager } from "../../../ai/providers/GitHubCopilotCliManager";
 import { createCollapsibleSection, renderDirectoryList, type SettingSectionContext } from "./SectionHelpers";
 
 /**
@@ -160,8 +160,8 @@ export function renderHelpSection(containerEl: HTMLElement, ctx: SettingSectionC
 	const linksDiv = helpContent.createDiv({ cls: "vc-help-links" });
 	const links = [
 		{ text: "GitHub Copilot Documentation", url: "https://docs.github.com/en/copilot" },
-		{ text: "GitHub Copilot CLI", url: "https://docs.github.com/en/copilot/how-tos/copilot-cli" },
-		{ text: "GitHub Copilot Pricing", url: "https://github.com/features/copilot/plans" },
+		{ text: "GitHub Copilot CLI", url: "https://docs.github.com/en/ai/how-tos/copilot-cli" },
+		{ text: "GitHub Copilot Pricing", url: "https://github.com/features/ai/plans" },
 	];
 	for (const link of links) {
 		const a = linksDiv.createEl("a", { text: link.text, href: link.url });
