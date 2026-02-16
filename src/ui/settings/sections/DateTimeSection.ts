@@ -26,7 +26,7 @@ export function renderDateTimeSection(container: HTMLElement, ctx: SettingSectio
 	const { content: section } = createCollapsibleSection(container, "Date & Time");
 
 	section.createEl("p", {
-		text: "Configure your preferred timezone and week start day. These settings are used throughout Vault Copilot for date calculations and AI context.",
+		text: "Configure your preferred timezone and week start day. These settings are used throughout Torqena for date calculations and AI context.",
 		cls: "vc-status-desc"
 	});
 

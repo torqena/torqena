@@ -19,6 +19,7 @@
 
 import { loadSettings, saveSettings } from "../shell-settings/WebShellSettings.js";
 import type { LayoutState } from "../shell-settings/WebShellSettings.js";
+import type { DockPaneManager } from "./DockPaneManager.js";
 
 /**
  * Manages the three-column workspace layout and persists state.
@@ -45,6 +46,11 @@ export class LayoutManager {
 
 	/** Callbacks notified when layout state changes. */
 	private onStateChange: (() => void)[] = [];
+
+	/** DockPaneManagers for each column (set after construction). */
+	private _leftDock: DockPaneManager | null = null;
+	private _centerDock: DockPaneManager | null = null;
+	private _rightDock: DockPaneManager | null = null;
 
 	constructor(
 		leftSplit: HTMLElement,
@@ -175,6 +181,24 @@ export class LayoutManager {
 	addStateChangeListener(fn: () => void): void {
 		this.onStateChange.push(fn);
 	}
+
+	// ── DockPaneManager references ──────────────────────────
+
+	/** Set the DockPaneManagers for each column. */
+	setDockManagers(left: DockPaneManager | null, center: DockPaneManager | null, right: DockPaneManager | null): void {
+		this._leftDock = left;
+		this._centerDock = center;
+		this._rightDock = right;
+	}
+
+	/** Get the left column DockPaneManager. */
+	get leftDock(): DockPaneManager | null { return this._leftDock; }
+
+	/** Get the center column DockPaneManager. */
+	get centerDock(): DockPaneManager | null { return this._centerDock; }
+
+	/** Get the right column DockPaneManager. */
+	get rightDock(): DockPaneManager | null { return this._rightDock; }
 
 	/** Get a right sidebar toggle icon SVG string. */
 	getRightSidebarIcon(collapsed: boolean): string {

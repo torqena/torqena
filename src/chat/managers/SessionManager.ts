@@ -3,7 +3,7 @@
 
 /**
  * @module SessionManager
- * @description Manages chat session lifecycle for Vault Copilot chat view.
+ * @description Manages chat session lifecycle for Torqena chat view.
  *
  * Handles creation, loading, persistence, and auto-naming of chat sessions while
  * coordinating with the GitHub Copilot CLI service for message history.

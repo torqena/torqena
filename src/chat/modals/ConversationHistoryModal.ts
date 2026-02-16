@@ -6,7 +6,7 @@
  * @description Modal and view components for browsing voice conversation history.
  *
  * Provides sorting, expansion, and deletion controls for stored voice conversations and
- * integrates with Vault Copilot to manage conversation artifacts.
+ * integrates with Torqena to manage conversation artifacts.
  *
  * @since 0.0.14
  */

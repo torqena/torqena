@@ -15,9 +15,10 @@ import { initDomExtensions } from "./platform/dom/dom-extensions.js";
 import moment from "moment";
 import { get, set } from "idb-keyval";
 
-import { PaneManager } from "./editor/PaneManager.js";
+import { DockPaneManager } from "./layout/DockPaneManager.js";
 import { LayoutManager } from "./layout/LayoutManager.js";
 import { WebShellApp } from "./app/WebShellApp.js";
+import { WorkspaceService } from "./ui/WorkspaceService.js";
 
 // Import plugin styles via JS so Vite processes @import chains correctly
 import "./styles/styles.css";
@@ -33,8 +34,7 @@ initDomExtensions();
 
 // ---- Main bootstrap ----
 const DIR_HANDLE_KEY = "vault-copilot-dir-handle";
-const DIR_PATH_KEY = "vault-copilot-dir-path";
-let activePaneManager: PaneManager | null = null;
+let activePaneManager: DockPaneManager | null = null;
 const pendingDockedFiles: string[] = [];
 
 function flushPendingDockedFiles(): void {
@@ -78,7 +78,7 @@ async function getDirectoryHandle(): Promise<FileSystemDirectoryHandle> {
  * Returns the path string or null if none stored.
  */
 function getStoredDirPath(): string | null {
-	return localStorage.getItem(DIR_PATH_KEY);
+	return WorkspaceService.getActiveWorkspace();
 }
 
 async function bootstrap(dirHandleOrPath: FileSystemDirectoryHandle | string, initialFilePath?: string): Promise<void> {
@@ -87,12 +87,40 @@ async function bootstrap(dirHandleOrPath: FileSystemDirectoryHandle | string, in
 		const webShellApp = await WebShellApp.create(
 			dirHandleOrPath,
 			initialFilePath,
-			renderFileExplorer,
+			undefined,
 			initRibbon,
 		);
 
-		activePaneManager = webShellApp.paneManager;
+		activePaneManager = webShellApp.centerDock;
 		flushPendingDockedFiles();
+
+		// Wire workspace navigator handlers
+		const navView = webShellApp.workspaceNavView;
+		if (navView) {
+			navView.setSwitchWorkspaceHandler((path: string) => {
+				WorkspaceService.setActiveWorkspace(path);
+				window.location.reload();
+			});
+			navView.setOpenFolderHandler(async () => {
+				try {
+					const dirPath = await window.electronAPI!.openDirectory();
+					if (!dirPath) return;
+					WorkspaceService.setActiveWorkspace(dirPath);
+					window.location.reload();
+				} catch { /* user cancelled */ }
+			});
+			navView.setCreateWorkspaceHandler(() => {
+				// Show the create workspace screen
+				const welcomeScreen = document.getElementById("welcome-screen");
+				const selectScreen = document.getElementById("select-workspace-screen");
+				const createScreen = document.getElementById("create-workspace-screen");
+				const picker = document.getElementById("vault-picker");
+				if (picker) picker.style.display = "";
+				if (welcomeScreen) welcomeScreen.style.display = "none";
+				if (selectScreen) selectScreen.style.display = "none";
+				if (createScreen) createScreen.style.display = "";
+			});
+		}
 
 		console.log("[web-shell] Chat view activated");
 	} catch (err: any) {
@@ -123,7 +151,10 @@ async function bootstrapStandaloneView(viewType: string): Promise<void> {
 }
 
 // ---- Wire up the folder picker button ----
-document.addEventListener("DOMContentLoaded", async () => {
+console.log("[web-shell] shell-main.ts module loaded, readyState:", document.readyState);
+
+async function initApp(): Promise<void> {
+	console.log("[web-shell] initApp() starting");
 	const initialOpenFilePath = new URLSearchParams(window.location.search).get("openFile") || undefined;
 	if (window.electronAPI?.onDockTab) {
 		window.electronAPI.onDockTab((filePath: string) => {
@@ -164,6 +195,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 		} catch { /* ignore */ }
 
 		const storedPath = getStoredDirPath();
+		console.log("[web-shell] Stored path:", storedPath);
 		if (storedPath) {
 			try {
 				const exists = await window.electronAPI.exists(storedPath);
@@ -175,11 +207,94 @@ document.addEventListener("DOMContentLoaded", async () => {
 				// Path no longer valid — show picker
 			}
 		}
-		// Show the folder picker UI
+
+		// Check for recent workspaces to decide which screen to show
+		const wsService = new WorkspaceService();
+		const recentWorkspaces = wsService.getRecentWorkspaces();
+		console.log("[web-shell] Recent workspaces:", recentWorkspaces.length, recentWorkspaces);
+
+		const welcomeScreen = document.getElementById("welcome-screen");
+		const selectScreen = document.getElementById("select-workspace-screen");
+		const createScreen = document.getElementById("create-workspace-screen");
+		console.log("[web-shell] Screens found:", { welcome: !!welcomeScreen, select: !!selectScreen, create: !!createScreen });
+
+		if (recentWorkspaces.length > 0 && selectScreen) {
+			// --- Show "Select Workspace" screen ---
+			if (welcomeScreen) welcomeScreen.style.display = "none";
+			selectScreen.style.display = "";
+
+			// Populate the recent workspaces list
+			const recentList = document.getElementById("ws-recent-list");
+			if (recentList) {
+				recentList.innerHTML = "";
+				for (const ws of recentWorkspaces) {
+					const li = document.createElement("li");
+					li.className = "ws-recent-item";
+					li.innerHTML = `<span class="ws-recent-item-dot"></span><span class="ws-recent-item-name">${ws.name || ws.path.split(/[\\/]/).pop() || "Workspace"}</span>`;
+					li.title = ws.path;
+					li.addEventListener("click", async () => {
+						try {
+							const exists = await window.electronAPI!.exists(ws.path);
+							if (!exists) {
+								const errorEl = document.getElementById("select-error");
+								if (errorEl) {
+									errorEl.textContent = "This workspace folder no longer exists.";
+									errorEl.style.display = "";
+								}
+								// Remove stale entry
+								wsService.removeRecentWorkspace(ws.path);
+								li.remove();
+								return;
+							}
+							await bootstrap(ws.path, initialOpenFilePath);
+						} catch (err: any) {
+							const errorEl = document.getElementById("select-error");
+							if (errorEl) {
+								errorEl.textContent = err?.message || "Failed to open workspace.";
+								errorEl.style.display = "";
+							}
+						}
+					});
+					recentList.appendChild(li);
+				}
+			}
+
+			// "Create New Workspace" button
+			const selectCreateBtn = document.getElementById("select-create-btn");
+			console.log("[web-shell] select-create-btn found:", !!selectCreateBtn);
+			selectCreateBtn?.addEventListener("click", () => {
+				console.log("[web-shell] 'Create New Workspace' clicked (select screen)");
+				selectScreen.style.display = "none";
+				if (createScreen) createScreen.style.display = "";
+			});
+
+			// "Open Existing Folder" button
+			const selectOpenBtn = document.getElementById("select-open-btn");
+			console.log("[web-shell] select-open-btn found:", !!selectOpenBtn);
+			selectOpenBtn?.addEventListener("click", async () => {
+				console.log("[web-shell] 'Open Existing Folder' clicked (select screen)");
+				try {
+					const dirPath = await window.electronAPI!.openDirectory();
+					if (!dirPath) return;
+					await bootstrap(dirPath, initialOpenFilePath);
+				} catch (err: any) {
+					const errorEl = document.getElementById("select-error");
+					if (errorEl) {
+						errorEl.textContent = err?.message || "Failed to open folder.";
+						errorEl.style.display = "";
+					}
+				}
+			});
+		}
+
+		// --- Welcome screen buttons (visible when no recent workspaces) ---
 		const pickBtn = document.getElementById("pick-folder-btn");
+		const createBtn = document.getElementById("create-workspace-btn");
 		const errorEl = document.getElementById("picker-error");
+		console.log("[web-shell] Welcome buttons found:", { pickBtn: !!pickBtn, createBtn: !!createBtn });
 
 		pickBtn?.addEventListener("click", async () => {
+			console.log("[web-shell] 'Open Existing Folder' clicked (welcome screen)");
 			try {
 				const dirPath = await window.electronAPI!.openDirectory();
 				if (!dirPath) return; // user cancelled
@@ -187,6 +302,179 @@ document.addEventListener("DOMContentLoaded", async () => {
 			} catch (err: any) {
 				if (errorEl) {
 					errorEl.textContent = err?.message || "Failed to open folder.";
+					errorEl.style.display = "";
+				}
+			}
+		});
+
+		// Show the create form when clicking "Create New Workspace"
+		createBtn?.addEventListener("click", () => {
+			console.log("[web-shell] 'Create New Workspace' clicked (welcome screen)");
+			if (welcomeScreen) welcomeScreen.style.display = "none";
+			if (createScreen) createScreen.style.display = "";
+		});
+
+		// --- Create Team Workspace form wiring ---
+		const wsTeamNameInput = document.getElementById("ws-team-name") as HTMLInputElement | null;
+		const wsLocationInput = document.getElementById("ws-location") as HTMLInputElement | null;
+		const wsChooseFolderBtn = document.getElementById("ws-choose-folder");
+		const wsCancelBtn = document.getElementById("ws-create-cancel");
+		const wsSubmitBtn = document.getElementById("ws-create-submit");
+		const wsCreateError = document.getElementById("ws-create-error");
+		let chosenDirPath: string | null = null;
+
+		// Cancel → back to the appropriate screen
+		wsCancelBtn?.addEventListener("click", () => {
+			if (createScreen) createScreen.style.display = "none";
+			if (recentWorkspaces.length > 0 && selectScreen) {
+				selectScreen.style.display = "";
+			} else if (welcomeScreen) {
+				welcomeScreen.style.display = "";
+			}
+			if (wsCreateError) wsCreateError.style.display = "none";
+		});
+
+		// Choose Folder button
+		const openFolderChooser = async () => {
+			try {
+				const dirPath = await window.electronAPI!.openDirectory();
+				if (!dirPath) return;
+				chosenDirPath = dirPath;
+				if (wsLocationInput) wsLocationInput.value = dirPath;
+			} catch { /* user cancelled */ }
+		};
+		wsChooseFolderBtn?.addEventListener("click", openFolderChooser);
+		wsLocationInput?.addEventListener("click", openFolderChooser);
+
+		// Create Workspace submit
+		wsSubmitBtn?.addEventListener("click", async () => {
+			console.log("[web-shell] Create Workspace button clicked");
+			// Re-query input at click time to ensure fresh reference
+			const nameInput = document.getElementById("ws-team-name") as HTMLInputElement | null;
+			const errorEl = document.getElementById("ws-create-error");
+			const teamName = nameInput?.value.trim() || "";
+			console.log("[web-shell] teamName:", JSON.stringify(teamName), "chosenDirPath:", chosenDirPath);
+			if (!teamName) {
+				if (errorEl) {
+					errorEl.textContent = "Please enter a team name.";
+					errorEl.style.display = "";
+				}
+				nameInput?.focus();
+				return;
+			}
+			if (!chosenDirPath) {
+				if (errorEl) {
+					errorEl.textContent = "Please choose a folder location.";
+					errorEl.style.display = "";
+				}
+				return;
+			}
+			try {
+				if (errorEl) errorEl.style.display = "none";
+				const wsType = (document.querySelector('input[name="ws-type"]:checked') as HTMLInputElement)?.value || "team";
+
+				const normalizedDir = chosenDirPath.replace(/[\\/]$/, "");
+
+				// Create the workspace folder if it doesn't exist
+				const exists = await window.electronAPI!.exists(normalizedDir);
+				if (!exists) {
+					await window.electronAPI!.mkdir(normalizedDir);
+				}
+
+				// Create .torqena config directory
+				const torqenaDir = `${normalizedDir}/.torqena`;
+				const torqenaExists = await window.electronAPI!.exists(torqenaDir);
+				if (!torqenaExists) {
+					await window.electronAPI!.mkdir(torqenaDir);
+				}
+
+				// Define default workspace folders based on type
+				const defaultFolders = wsType === "personal"
+					? [
+						{ id: "notes", name: "Notes", description: "Personal notes and journals", icon: "file-text", folderPath: "Notes" },
+						{ id: "tasks", name: "Tasks", description: "Task lists and to-dos", icon: "check-square", folderPath: "Tasks" },
+						{ id: "projects", name: "Projects", description: "Project documentation", icon: "folder-kanban", folderPath: "Projects" },
+						{ id: "reference", name: "Reference", description: "Reference materials and bookmarks", icon: "bookmark", folderPath: "Reference" },
+					]
+					: [
+						{ id: "meetings", name: "Meetings", description: "Meeting notes, agendas, and recordings", icon: "calendar", folderPath: "Meetings" },
+						{ id: "tasks", name: "Tasks", description: "Task lists, assignments, and progress tracking", icon: "check-square", folderPath: "Tasks" },
+						{ id: "dashboards", name: "Dashboards", description: "Dashboard views and analytics", icon: "layout-dashboard", folderPath: "Dashboards" },
+						{ id: "templates", name: "Templates", description: "Document templates and scaffolds", icon: "file-plus", folderPath: "Templates" },
+					];
+
+				// Scaffold .torqena/workspace.json with full schema
+				const wsConfigPath = `${torqenaDir}/workspace.json`;
+				const now = new Date().toISOString();
+				const wsConfig = {
+					schemaVersion: 1,
+					workspaceId: `ws_${crypto.randomUUID().replace(/-/g, "").slice(0, 12)}`,
+					name: teamName,
+					description: "",
+					createdAt: now,
+					lastOpenedAt: now,
+					owner: {
+						id: crypto.randomUUID(),
+						displayName: "",
+					},
+					theme: {
+						mode: "dark",
+						accentColor: "#3B82F6",
+						icon: wsType === "personal" ? "brain" : "rocket",
+						customLogoPath: null,
+					},
+					layout: {
+						defaultView: "home",
+						sidebarCollapsed: false,
+						agentPanelVisible: true,
+						agentPanelWidth: 360,
+					},
+					structure: {
+						folders: defaultFolders,
+					},
+					extensions: { installed: [] },
+					ai: {
+						agents: [],
+						skills: [],
+						prompts: [],
+						enabled: true,
+						defaultModel: "gpt-4.1",
+						behavior: {
+							executionMode: "review-first",
+							approvalRequired: true,
+							autoExtractTasks: false,
+							autoSummarizeMeetings: wsType === "team",
+						},
+						permissions: {
+							canModifyFiles: true,
+							canCreateFiles: true,
+							canDeleteFiles: false,
+							canCallExternalTools: false,
+						},
+						memory: {
+							enableEmbeddings: false,
+							embeddingModel: null,
+							lastIndexedAt: null,
+						},
+					},
+					indexing: { watchMode: "filesystem", lastIndexedAt: null },
+					collaboration: { enabled: false, members: [], roles: [] },
+				};
+				await window.electronAPI!.writeFile(wsConfigPath, JSON.stringify(wsConfig, null, 2));
+
+				// Create the workspace structure folders
+				for (const folder of defaultFolders) {
+					const folderAbsPath = `${normalizedDir}/${folder.folderPath}`;
+					const folderExists = await window.electronAPI!.exists(folderAbsPath);
+					if (!folderExists) {
+						await window.electronAPI!.mkdir(folderAbsPath);
+					}
+				}
+
+				await bootstrap(normalizedDir, initialOpenFilePath);
+			} catch (err: any) {
+				if (errorEl) {
+					errorEl.textContent = err?.message || "Failed to create workspace.";
 					errorEl.style.display = "";
 				}
 			}
@@ -222,7 +510,14 @@ document.addEventListener("DOMContentLoaded", async () => {
 			}
 		});
 	}
-});
+}
+
+// Run immediately if DOM is ready, otherwise wait for DOMContentLoaded
+if (document.readyState === "loading") {
+	document.addEventListener("DOMContentLoaded", () => void initApp());
+} else {
+	void initApp();
+}
 
 // ---- File Explorer ----
 
@@ -282,7 +577,7 @@ function buildFileTree(files: { path: string }[]): TreeNode[] {
 	return root;
 }
 
-function renderFileExplorer(container: HTMLElement, vault: any, app: any, paneManager: PaneManager | null): void {
+function renderFileExplorer(container: HTMLElement, vault: any, app: any, paneManager: DockPaneManager | null): void {
 	container.innerHTML = "";
 	const explorer = document.createElement("div");
 	explorer.className = "ws-file-explorer";
@@ -347,7 +642,7 @@ function renderFileExplorer(container: HTMLElement, vault: any, app: any, paneMa
 	container.appendChild(explorer);
 }
 
-function renderTreeNodes(container: HTMLElement, nodes: TreeNode[], paneManager: PaneManager | null): void {
+function renderTreeNodes(container: HTMLElement, nodes: TreeNode[], paneManager: DockPaneManager | null): void {
 	for (const node of nodes) {
 		const item = document.createElement("div");
 		item.className = "ws-file-item" + (node.isFolder ? " ws-folder-item" : "");
@@ -515,7 +810,7 @@ function createContextMenu(x: number, y: number, sections: ContextMenuItem[][]):
 	activeContextMenuCleanup = () => document.removeEventListener("click", dismiss);
 }
 
-function showFileContextMenu(e: MouseEvent, node: TreeNode, paneManager: PaneManager | null): void {
+function showFileContextMenu(e: MouseEvent, node: TreeNode, paneManager: DockPaneManager | null): void {
 	const sections: ContextMenuItem[][] = [
 		[
 			{ label: "Open in new tab", icon: ctxIcons.openTab, action: () => paneManager?.openFile(node.path) },
@@ -543,7 +838,7 @@ function showFileContextMenu(e: MouseEvent, node: TreeNode, paneManager: PaneMan
 	createContextMenu(e.clientX, e.clientY, sections);
 }
 
-function showFolderContextMenu(e: MouseEvent, node: TreeNode, paneManager: PaneManager | null): void {
+function showFolderContextMenu(e: MouseEvent, node: TreeNode, paneManager: DockPaneManager | null): void {
 	const sections: ContextMenuItem[][] = [
 		[
 			{ label: "New note", icon: ctxIcons.newNote, disabled: true },
@@ -593,12 +888,10 @@ function renderCenterPlaceholder(container: HTMLElement): void {
 /**
  * Wire up the left ribbon icon strip: collapse toggle, file explorer, extensions.
  */
-function initRibbon(leftSplit: HTMLElement, vault: any, app: any, plugin: any, workspace: any, paneManager: PaneManager | null, layoutManager: LayoutManager): void {
+function initRibbon(leftSplit: HTMLElement, vault: any, app: any, plugin: any, workspace: any, centerDock: DockPaneManager | null, layoutManager: LayoutManager): void {
 	const toggleBtn = document.querySelector(".ws-ribbon-toggle") as HTMLElement;
 	const filesBtn = document.querySelector(".ws-ribbon-files") as HTMLElement;
 	const extBtn = document.querySelector(".ws-ribbon-extensions") as HTMLElement;
-	const leftContent = leftSplit.querySelector(".ws-left-content") as HTMLElement || leftSplit;
-
 	if (!toggleBtn || !filesBtn || !extBtn) return;
 
 	// Set icons
@@ -608,8 +901,6 @@ function initRibbon(leftSplit: HTMLElement, vault: any, app: any, plugin: any, w
 	filesBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"/></svg>`;
 	// Extensions / puzzle piece icon (Lucide "puzzle" — matches ExtensionBrowserView)
 	extBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19.439 7.85c-.049.322.059.648.289.878l1.568 1.568c.47.47.706 1.087.706 1.704s-.235 1.233-.706 1.704l-1.611 1.611a.98.98 0 0 1-.837.276c-.47-.07-.802-.48-.968-.925a2.501 2.501 0 1 0-3.214 3.214c.446.166.855.497.925.968a.979.979 0 0 1-.276.837l-1.61 1.61a2.404 2.404 0 0 1-1.705.707 2.402 2.402 0 0 1-1.704-.706l-1.568-1.568a1.026 1.026 0 0 0-.877-.29c-.493.074-.84.504-1.02.968a2.5 2.5 0 1 1-3.237-3.237c.464-.18.894-.527.967-1.02a1.026 1.026 0 0 0-.289-.877l-1.568-1.568A2.402 2.402 0 0 1 1.998 12c0-.617.236-1.234.706-1.704L4.315 8.685a.98.98 0 0 1 .837-.276c.47.07.802.48.968.925a2.501 2.501 0 1 0 3.214-3.214c-.446-.166-.855-.497-.925-.968a.979.979 0 0 1 .276-.837l1.61-1.61a2.404 2.404 0 0 1 1.705-.707 2.402 2.402 0 0 1 1.704.706l1.568 1.568c.23.23.556.338.877.29.493-.074.84-.504 1.02-.968a2.5 2.5 0 1 1 3.237 3.237c-.464.18-.894.527-.967 1.02Z"/></svg>`;
-
-	let activeView: "files" | "extensions" = "files";
 
 	// Toggle collapse via LayoutManager
 	toggleBtn.addEventListener("click", () => {
@@ -650,32 +941,28 @@ function initRibbon(leftSplit: HTMLElement, vault: any, app: any, plugin: any, w
 		extBtn.classList.toggle("is-active", active === "extensions");
 	};
 
-	// Files view
+	// Files view — activate workspace navigator tab in the left dock
 	filesBtn.addEventListener("click", () => {
-		if (activeView === "files" && !layoutManager.isLeftCollapsed) {
-			return;
-		}
-		activeView = "files";
-		setActiveRibbonButton("files");
 		if (layoutManager.isLeftCollapsed) {
 			layoutManager.expandLeft();
 		}
-		leftContent.innerHTML = "";
-		renderFileExplorer(leftContent, vault, app, paneManager);
+		const leftDock = layoutManager.leftDock;
+		if (leftDock) {
+			void leftDock.addWidgetToActivePanel("workspace-navigator-view");
+		}
+		setActiveRibbonButton("files");
 	});
 
-	// Extensions view
+	// Extensions view — activate extensions tab in the left dock
 	extBtn.addEventListener("click", async () => {
-		if (activeView === "extensions" && !layoutManager.isLeftCollapsed) {
-			return;
-		}
-		activeView = "extensions";
-		setActiveRibbonButton("extensions");
 		if (layoutManager.isLeftCollapsed) {
 			layoutManager.expandLeft();
 		}
-		leftContent.innerHTML = "";
-		await plugin.activateExtensionBrowser();
+		const leftDock = layoutManager.leftDock;
+		if (leftDock) {
+			void leftDock.addWidgetToActivePanel("extension-browser-view");
+		}
+		setActiveRibbonButton("extensions");
 	});
 }
 

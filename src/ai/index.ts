@@ -1,6 +1,6 @@
 /**
  * @module copilot
- * @description Vault Copilot core module exports.
+ * @description Torqena core module exports.
  * 
  * This is the main entry point for the copilot module, providing re-exports
  * from all submodules for backward compatibility and convenience.

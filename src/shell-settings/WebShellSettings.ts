@@ -18,6 +18,18 @@ export interface LayoutState {
 	rightCollapsed: boolean;
 }
 
+// ── Dock Tab State ──────────────────────────────────────────
+
+/**
+ * Describes a single tab inside a DockPanel leaf.
+ * Can be an editor tab (file) or a widget tab (ItemView).
+ */
+export type DockTabState =
+	| { type: "editor"; filePath: string }
+	| { type: "widget"; viewType: string; state?: any };
+
+// ── Pane Tree State (used per column) ───────────────────────
+
 /** Serialized pane tree for persistence. */
 export interface PaneTreeState {
 	/** Recursive tree of "leaf" and "split" nodes. */
@@ -31,10 +43,14 @@ export type PaneNodeState = PaneLeafState | PaneSplitState;
 export interface PaneLeafState {
 	type: "leaf";
 	id: string;
-	/** File paths of open tabs, in order. */
+	/** File paths of open tabs, in order (legacy center-pane compat). */
 	openTabs: string[];
-	/** Path of the active tab (null if blank tab was active). */
+	/** Path of the active tab — null if blank tab was active (legacy). */
 	activeTab: string | null;
+	/** Dock tab descriptors (new unified format). When present, takes precedence over openTabs. */
+	tabs?: DockTabState[];
+	/** ID of the active dock tab (index into tabs[]). */
+	activeTabIndex?: number;
 }
 
 export interface PaneSplitState {
@@ -103,7 +119,12 @@ export interface WebShellSettings {
 
 	// Layout persistence
 	layout?: LayoutState;
+	/** Center column pane tree (editor-centric, backward compat). */
 	paneTree?: PaneTreeState;
+	/** Left column dock pane tree. */
+	leftDockTree?: PaneTreeState;
+	/** Right column dock pane tree. */
+	rightDockTree?: PaneTreeState;
 }
 
 export const DEFAULT_SETTINGS: WebShellSettings = {

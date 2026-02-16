@@ -2,12 +2,51 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Debug Electron: Main",
+            "type": "node",
+            "request": "launch",
+            "runtimeExecutable": "${workspaceFolder}/node_modules/.bin/electron.cmd",
+            "runtimeArgs": [
+                "--remote-debugging-port=9222",
+                "electron/main.cjs"
+            ],
+            "env": {
+                "NODE_ENV": "development"
+            },
+            "cwd": "${workspaceFolder}",
+            "sourceMaps": true,
+            "outFiles": [],
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "Debug Electron: Renderer",
+            "type": "chrome",
+            "request": "attach",
+            "port": 9222,
+            "webRoot": "${workspaceFolder}",
+            "sourceMaps": true,
+            "sourceMapPathOverrides": {
+                "/@fs/*": "${workspaceFolder}/*",
+                "/src/*": "${workspaceFolder}/src/*"
+            },
+            "timeout": 30000
+        },
+        {
             "name": "Attach to Node Functions",
             "type": "node",
             "request": "attach",
             "restart": true,
             "port": 9229,
             "preLaunchTask": "func: host start"
+        }
+    ],
+    "compounds": [
+        {
+            "name": "Electron: Full Debug",
+            "configurations": [
+                "Debug Electron: Main",
+                "Debug Electron: Renderer"
+            ]
         }
     ]
 }

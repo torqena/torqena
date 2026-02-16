@@ -1,6 +1,6 @@
 /**
  * @module tools
- * @description Tool definitions and operations for Vault Copilot.
+ * @description Tool definitions and operations for Torqena.
  * 
  * This module provides centralized tool definitions, vault operations,
  * and task parsing utilities shared across all AI providers.

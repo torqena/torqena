@@ -126,6 +126,8 @@ export class EditorManager {
 	private paneMenuClickHandler: ((e: MouseEvent) => void) | null = null;
 	/** Callback fired when document stats change (selection, content, tab switch) */
 	private onStatsChange: ((stats: DocumentStats) => void) | null = null;
+	/** Callback fired when the active file/tab changes (label derived from filePath) */
+	private onActiveFileChange: ((filePath: string | null) => void) | null = null;
 
 	// ── CodeMirror Compartments for dynamic reconfiguration ──
 	private lineNumbersCompartment = new Compartment();
@@ -522,6 +524,14 @@ export class EditorManager {
 		this.onCloseLastTabRequested = handler;
 	}
 
+	/**
+	 * Set a callback for when the active file/tab changes.
+	 * @param handler - Receives the active file path, or null when no file is open
+	 */
+	setActiveFileChangeHandler(handler: (filePath: string | null) => void): void {
+		this.onActiveFileChange = handler;
+	}
+
 	/** Allow host containers (PaneManager) to override pane-menu button behavior. */
 	setPaneMenuHandler(handler: ((e: MouseEvent) => void) | null): void {
 		this.paneMenuClickHandler = handler;
@@ -756,6 +766,11 @@ export class EditorManager {
 	private activateTab(filePath: string, fromHistory = false): void {
 		this.activeTabPath = filePath;
 		this.activeBlankTabId = null;
+
+		// Notify host (DockPanel) so it can update the dock tab label
+		if (this.onActiveFileChange) {
+			this.onActiveFileChange(filePath);
+		}
 
 		// Deactivate all blank tabs
 		for (const [, bEl] of this.blankTabs) {

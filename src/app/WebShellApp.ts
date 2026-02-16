@@ -34,7 +34,7 @@ import { MetadataCache } from "../platform/metadata/MetadataCache.js";
 import { FileManager } from "../platform/metadata/FileManager.js";
 import { set } from "idb-keyval";
 
-import { PaneManager } from "../editor/PaneManager.js";
+import { DockPaneManager } from "../layout/DockPaneManager.js";
 import { EditorManager } from "../editor/EditorManager.js";
 import { PropertiesView, PROPERTIES_VIEW_TYPE } from "../editor/PropertiesView.js";
 import { PropertyTypeRegistry } from "../editor/PropertyTypeRegistry.js";
@@ -46,12 +46,12 @@ import { AppearanceSettingTab, applyTheme } from "../shell-settings/AppearanceSe
 import { KeychainSettingTab } from "../shell-settings/KeychainSettingTab.js";
 import { loadSettings, settingsChanged } from "../shell-settings/WebShellSettings.js";
 import { AIServiceManager } from "./AIServiceManager.js";
+import { FileExplorerView, FILE_EXPLORER_VIEW_TYPE } from "../ui/FileExplorerView.js";
+import { WorkspaceNavigatorView, WORKSPACE_NAV_VIEW_TYPE } from "../ui/WorkspaceNavigatorView.js";
+import { WorkspaceService } from "../ui/WorkspaceService.js";
 
 /** @internal IndexedDB key for persisting the FileSystemDirectoryHandle (browser mode). */
 const DIR_HANDLE_KEY = "vault-copilot-dir-handle";
-
-/** @internal localStorage key for persisting the vault directory path (Electron mode). */
-const DIR_PATH_KEY = "vault-copilot-dir-path";
 
 /** @internal localStorage key for plugin settings. */
 const SETTINGS_KEY = "plugin:obsidian-vault-copilot:data";
@@ -72,9 +72,17 @@ export class WebShellApp {
 	/** @internal */
 	private _plugin: AIServiceManager;
 	/** @internal */
-	private _paneManager: PaneManager | null = null;
+	private _leftDock: DockPaneManager | null = null;
+	/** @internal */
+	private _centerDock: DockPaneManager | null = null;
+	/** @internal */
+	private _rightDock: DockPaneManager | null = null;
 	/** @internal */
 	private _layoutManager: LayoutManager | null = null;
+	/** @internal */
+	private _workspaceService: WorkspaceService | null = null;
+	/** @internal */
+	private _workspaceNavView: WorkspaceNavigatorView | null = null;
 	/** @internal */
 	private static _systemThemeSyncInitialized = false;
 
@@ -104,11 +112,23 @@ export class WebShellApp {
 	/** The AI service manager instance. */
 	get plugin(): AIServiceManager { return this._plugin; }
 
-	/** The PaneManager instance (null until UI wiring). */
-	get paneManager(): PaneManager | null { return this._paneManager; }
+	/** The left column DockPaneManager (null until UI wiring). */
+	get leftDock(): DockPaneManager | null { return this._leftDock; }
+
+	/** The center column DockPaneManager (null until UI wiring). */
+	get centerDock(): DockPaneManager | null { return this._centerDock; }
+
+	/** The right column DockPaneManager (null until UI wiring). */
+	get rightDock(): DockPaneManager | null { return this._rightDock; }
 
 	/** The LayoutManager instance (null until UI wiring). */
 	get layoutManager(): LayoutManager | null { return this._layoutManager; }
+
+	/** The WorkspaceService instance (null until initialization). */
+	get workspaceService(): WorkspaceService | null { return this._workspaceService; }
+
+	/** The WorkspaceNavigatorView instance (null until UI wiring). */
+	get workspaceNavView(): WorkspaceNavigatorView | null { return this._workspaceNavView; }
 
 	// ---- Static Factory ----
 
@@ -134,12 +154,24 @@ export class WebShellApp {
 	static async create(
 		dirHandleOrPath: FileSystemDirectoryHandle | string,
 		initialFilePath?: string,
-		renderFileExplorer?: (container: HTMLElement, vault: any, app: any, paneManager: PaneManager | null) => void,
-		initRibbon?: (leftSplit: HTMLElement, vault: any, app: any, plugin: any, workspace: any, paneManager: PaneManager | null, layoutManager: LayoutManager) => void,
+		renderFileExplorer?: (container: HTMLElement, vault: any, app: any, centerDock: DockPaneManager | null) => void,
+		initRibbon?: (leftSplit: HTMLElement, vault: any, app: any, plugin: any, workspace: any, centerDock: DockPaneManager | null, layoutManager: LayoutManager) => void,
 	): Promise<WebShellApp> {
 		// Persist for next load
 		if (typeof dirHandleOrPath === "string") {
-			localStorage.setItem(DIR_PATH_KEY, dirHandleOrPath);
+			WorkspaceService.setActiveWorkspace(dirHandleOrPath);
+
+			// Ensure .torqena config folder exists
+			const torqenaDir = dirHandleOrPath.replace(/[\\/]$/, "") + "/.torqena";
+			try {
+				const exists = await window.electronAPI?.exists(torqenaDir);
+				if (!exists) {
+					await window.electronAPI?.mkdir(torqenaDir);
+					console.log("[web-shell] Created .torqena folder:", torqenaDir);
+				}
+			} catch (err) {
+				console.warn("[web-shell] Failed to create .torqena folder:", err);
+			}
 		} else {
 			await set(DIR_HANDLE_KEY, dirHandleOrPath).catch(() => {});
 		}
@@ -211,72 +243,111 @@ export class WebShellApp {
 		// ---- Wire UI ----
 		if (rootSplit) rootSplit.innerHTML = "";
 
-		// Populate center pane with split pane manager
+		// ---- Center column: DockPaneManager ----
 		if (rootSplit) {
-			const paneManager = new PaneManager(rootSplit, vault);
-			instance._paneManager = paneManager;
-			paneManager.setWorkspace(workspace);
+			const centerDock = new DockPaneManager(rootSplit, vault, "center");
+			instance._centerDock = centerDock;
+			centerDock.setWorkspace(workspace);
+			centerDock.setApp(app);
 
-			await paneManager.restoreState();
+			await centerDock.restoreState();
 
+			// If no tabs were restored, open initial file or create blank editor
 			if (initialFilePath) {
-				await paneManager.openFile(initialFilePath);
+				await centerDock.openFile(initialFilePath);
 			}
 		}
 
-		// Populate left pane with file explorer
+		// ---- Left column: DockPaneManager with workspace navigator + file explorer ----
 		const leftSplit = document.querySelector(".mod-left-split") as HTMLElement;
 		const leftContent = document.querySelector(".ws-left-content") as HTMLElement || leftSplit;
-		if (leftContent && renderFileExplorer) {
-			renderFileExplorer(leftContent, vault, app, instance._paneManager);
+		if (leftContent) {
+			const leftDock = new DockPaneManager(leftContent, vault, "left");
+			instance._leftDock = leftDock;
+			leftDock.setApp(app);
+
+			// Initialize WorkspaceService and load config
+			const workspaceService = new WorkspaceService();
+			instance._workspaceService = workspaceService;
+
+			const dirPath = typeof dirHandleOrPath === "string" ? dirHandleOrPath : null;
+			if (dirPath) {
+				await workspaceService.loadWorkspaceConfig(dirPath);
+			}
+
+			// Register WorkspaceNavigatorView
+			plugin.registerView(WORKSPACE_NAV_VIEW_TYPE, (l: any) => {
+				const view = new WorkspaceNavigatorView(l, workspaceService, app);
+				view.setFolderClickHandler((folder) => {
+					if (instance._centerDock && dirPath) {
+						const folderRootPath = folder.folderPath;
+						void instance._centerDock.openFile(folderRootPath);
+					}
+				});
+				// Expose the view on the instance for handler wiring
+				instance._workspaceNavView = view;
+				return view;
+			});
+
+			// Register FileExplorerView (available via ribbon)
+			plugin.registerView(FILE_EXPLORER_VIEW_TYPE, (l: any) => {
+				const view = new FileExplorerView(l, vault, app);
+				view.setOpenFileHandler((filePath: string) => {
+					if (instance._centerDock) {
+						void instance._centerDock.openFile(filePath);
+					}
+				});
+				return view;
+			});
+
+			// Add workspace navigator as the default left sidebar view
+			await leftDock.addWidgetToActivePanel(WORKSPACE_NAV_VIEW_TYPE);
 		}
 
-		// Open chat in the right pane
-		const leaf = workspace.getRightLeaf(false);
-		await leaf.setViewState({ type: "copilot-chat-view", active: true });
-		workspace.revealLeaf(leaf);
+		// ---- Right column: DockPaneManager with chat + properties ----
+		const rightSplit = document.querySelector<HTMLElement>(".mod-right-split")!;
+		if (rightSplit) {
+			// Find or create a right content container
+			let rightContent = rightSplit.querySelector<HTMLElement>(".ws-right-content");
+			if (!rightContent) {
+				rightContent = document.createElement("div");
+				rightContent.className = "ws-right-content";
+				// Insert before status bar if it exists
+				const statusBar = rightSplit.querySelector(".status-bar");
+				if (statusBar) {
+					rightSplit.insertBefore(rightContent, statusBar);
+				} else {
+					rightSplit.appendChild(rightContent);
+				}
+			}
 
-		// Register and open Properties view in a second right-sidebar leaf
-		plugin.registerView(PROPERTIES_VIEW_TYPE, (l: any) => new PropertiesView(l, vault, propertyRegistry));
-		const propsLeaf = workspace.getRightLeaf(true);
-		await propsLeaf.setViewState({ type: PROPERTIES_VIEW_TYPE });
-		// Start hidden — toggled via sidebar tab icon
-		propsLeaf.containerEl.style.display = "none";
+			const rightDock = new DockPaneManager(rightContent, vault, "right");
+			instance._rightDock = rightDock;
+			rightDock.setApp(app);
 
-		// Wire right-sidebar tab switching between Chat and Properties
-		const chatIcon = document.querySelector(".ws-ribbon-chat") as HTMLElement | null;
-		const propsIcon = document.querySelector(".ws-ribbon-properties") as HTMLElement | null;
-		if (chatIcon && propsIcon) {
-			const showChat = () => {
-				leaf.containerEl.style.display = "";
-				propsLeaf.containerEl.style.display = "none";
-				chatIcon.classList.add("is-active");
-				propsIcon.classList.remove("is-active");
-			};
-			const showProps = () => {
-				leaf.containerEl.style.display = "none";
-				propsLeaf.containerEl.style.display = "";
-				propsIcon.classList.add("is-active");
-				chatIcon.classList.remove("is-active");
-			};
-			chatIcon.addEventListener("click", showChat);
-			propsIcon.addEventListener("click", showProps);
+			// Register and add Properties view
+			plugin.registerView(PROPERTIES_VIEW_TYPE, (l: any) => new PropertiesView(l, vault, propertyRegistry));
+
+			// Add properties as a widget tab (chat is loaded on demand via ribbon icon)
+			await rightDock.addWidgetToActivePanel(PROPERTIES_VIEW_TYPE);
 		}
 
 		workspace.layoutReady();
 
 		// Wire up resizable panes via LayoutManager
-		const rightSplit = document.querySelector<HTMLElement>(".mod-right-split")!;
 		const layoutManager = new LayoutManager(leftSplit, rootSplit, rightSplit);
 		instance._layoutManager = layoutManager;
 
-		if (instance._paneManager) {
-			instance._paneManager.setLayoutManager(layoutManager);
-		}
+		// Register dock managers with layout manager
+		layoutManager.setDockManagers(instance._leftDock, instance._centerDock, instance._rightDock);
+
+		if (instance._leftDock) instance._leftDock.setLayoutManager(layoutManager);
+		if (instance._centerDock) instance._centerDock.setLayoutManager(layoutManager);
+		if (instance._rightDock) instance._rightDock.setLayoutManager(layoutManager);
 
 		// Wire right-pane status bar with document stats
 		const statusBar = rightSplit.querySelector<HTMLElement>(".status-bar");
-		if (statusBar && instance._paneManager) {
+		if (statusBar && instance._centerDock) {
 			const propsItem = document.createElement("span");
 			propsItem.className = "status-bar-item";
 			propsItem.textContent = "0 properties";
@@ -288,7 +359,7 @@ export class WebShellApp {
 			charsItem.textContent = "0 characters";
 			statusBar.append(propsItem, wordsItem, charsItem);
 
-			instance._paneManager.setStatsChangeHandler((stats) => {
+			instance._centerDock.setStatsChangeHandler((stats) => {
 				propsItem.textContent = `${stats.properties} ${stats.properties === 1 ? "property" : "properties"}`;
 				wordsItem.textContent = `${stats.words} ${stats.words === 1 ? "word" : "words"}`;
 				charsItem.textContent = `${stats.characters} ${stats.characters === 1 ? "character" : "characters"}`;
@@ -297,8 +368,11 @@ export class WebShellApp {
 
 		// Wire up ribbon
 		if (initRibbon) {
-			initRibbon(leftSplit, vault, app, plugin, workspace, instance._paneManager, layoutManager);
+			initRibbon(leftSplit, vault, app, plugin, workspace, instance._centerDock, layoutManager);
 		}
+
+		// Wire right ribbon icons (chat + properties on-demand launchers)
+		instance.initRightRibbon(layoutManager);
 
 		// Persist state before unload
 		window.addEventListener("beforeunload", () => {
@@ -329,7 +403,7 @@ export class WebShellApp {
 		container.className = "ws-standalone-view";
 		document.body.appendChild(container);
 
-		const dirPath = localStorage.getItem(DIR_PATH_KEY);
+		const dirPath = WorkspaceService.getActiveWorkspace();
 		if (!dirPath) {
 			container.innerHTML = '<div style="padding:2em;color:var(--text-error);">No vault selected — close this window and open from the main window.</div>';
 			return;
@@ -433,6 +507,50 @@ export class WebShellApp {
 		}
 	}
 
+	// ---- Right Ribbon ----
+
+	/**
+	 * Wire the right sidebar ribbon icons (chat, properties) to launch
+	 * their respective widgets on demand.
+	 *
+	 * @param layoutManager - The layout manager for expanding the right sidebar
+	 * @internal
+	 */
+	private initRightRibbon(layoutManager: LayoutManager): void {
+		const chatBtn = document.querySelector<HTMLElement>(".ws-ribbon-chat");
+		const propsBtn = document.querySelector<HTMLElement>(".ws-ribbon-properties");
+
+		if (chatBtn) {
+			chatBtn.addEventListener("click", async () => {
+				// Expand right sidebar if collapsed
+				if (layoutManager.isRightCollapsed) {
+					layoutManager.expandRight();
+				}
+				const rightDock = this._rightDock;
+				if (rightDock) {
+					await rightDock.addWidgetToActivePanel("copilot-chat-view");
+				}
+				// Update active states
+				chatBtn.classList.add("is-active");
+				propsBtn?.classList.remove("is-active");
+			});
+		}
+
+		if (propsBtn) {
+			propsBtn.addEventListener("click", async () => {
+				if (layoutManager.isRightCollapsed) {
+					layoutManager.expandRight();
+				}
+				const rightDock = this._rightDock;
+				if (rightDock) {
+					await rightDock.addWidgetToActivePanel(PROPERTIES_VIEW_TYPE);
+				}
+				propsBtn.classList.add("is-active");
+				chatBtn?.classList.remove("is-active");
+			});
+		}
+	}
+
 	// ---- State Persistence ----
 
 	/**
@@ -440,7 +558,9 @@ export class WebShellApp {
 	 * Called on beforeunload and can be called manually.
 	 */
 	persistState(): void {
-		if (this._paneManager) this._paneManager.persistState();
+		if (this._leftDock) this._leftDock.persistState();
+		if (this._centerDock) this._centerDock.persistState();
+		if (this._rightDock) this._rightDock.persistState();
 		if (this._layoutManager) this._layoutManager.persistState();
 	}
 

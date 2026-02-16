@@ -157,6 +157,7 @@ export interface DiscoveredMcpServer {
 
 /**
  * Vault-specific MCP configuration stored in .obsidian/mcp-servers.json
+ * @deprecated Use {@link WorkspaceMcpConfig} instead
  */
 export interface VaultMcpConfig {
 	/** Version for future migrations */
@@ -178,7 +179,14 @@ export interface VaultMcpConfig {
 }
 
 /**
+ * Workspace-specific MCP configuration.
+ * Alias for VaultMcpConfig during migration.
+ */
+export type WorkspaceMcpConfig = VaultMcpConfig;
+
+/**
  * Default vault MCP configuration
+ * @deprecated Use {@link DEFAULT_WORKSPACE_MCP_CONFIG} instead
  */
 export const DEFAULT_VAULT_MCP_CONFIG: VaultMcpConfig = {
 	version: 1,
@@ -193,6 +201,11 @@ export const DEFAULT_VAULT_MCP_CONFIG: VaultMcpConfig = {
 		docker: true,
 	},
 };
+
+/**
+ * Default workspace MCP configuration
+ */
+export const DEFAULT_WORKSPACE_MCP_CONFIG: WorkspaceMcpConfig = DEFAULT_VAULT_MCP_CONFIG;
 
 /**
  * Raw MCP server entry from external config files (Claude, VS Code, etc.)

@@ -1,6 +1,6 @@
 /**
  * @module voice-chat
- * @description Voice chat and transcription services for Vault Copilot.
+ * @description Voice chat and transcription services for Torqena.
  * 
  * This module provides:
  * - **Whisper transcription** - Multiple backends (local, OpenAI, Azure)

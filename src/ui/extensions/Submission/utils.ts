@@ -582,7 +582,7 @@ export async function fetchPreviousExtensionData(
  * is a human-readable Markdown string suitable for inclusion in CHANGELOG.md and the
  * manifest's `versions` array.
  *
- * @param plugin - The Vault Copilot plugin instance (provides access to the AI service)
+ * @param plugin - The Torqena plugin instance (provides access to the AI service)
  * @param extensionName - Human-readable name of the extension
  * @param extensionId - Unique extension identifier
  * @param previousReadme - The README content from the currently published version
@@ -628,7 +628,7 @@ export async function generateChangelogWithAI(
 			throw new Error("No active AI service available");
 		}
 
-		const prompt = `You are an expert technical writer generating a detailed changelog entry for an Obsidian Vault Copilot extension update.
+		const prompt = `You are an expert technical writer generating a detailed changelog entry for an Obsidian Torqena extension update.
 
 Extension: "${extensionName}" (ID: ${extensionId})
 Previous version: ${previousVersion}
@@ -764,7 +764,7 @@ export async function generateExtensionContent(
 	if (!plugin || !extensionPath) {
 		console.log("No plugin or extension path, skipping content generation");
 		return {
-			description: `${extensionName || "Extension"} - A helpful extension for Obsidian Vault Copilot.`,
+			description: `${extensionName || "Extension"} - A helpful extension for Obsidian Torqena.`,
 			readme: `# ${extensionName || "Extension"}\n\n## Overview\n\nThis extension enhances your Obsidian experience.\n\n## Usage\n\nUse the command palette to access extension features.`
 		};
 	}
@@ -775,7 +775,7 @@ export async function generateExtensionContent(
 		if (!aiService) {
 			console.log("AI service not available, using fallback content");
 			return {
-				description: `${extensionName || "Extension"} - A helpful extension for Obsidian Vault Copilot.`,
+				description: `${extensionName || "Extension"} - A helpful extension for Obsidian Torqena.`,
 				readme: `# ${extensionName || "Extension"}\n\n## Overview\n\nThis extension enhances your Obsidian experience.\n\n## Usage\n\nUse the command palette to access extension features.`
 			};
 		}
@@ -850,7 +850,7 @@ README.md content:`;
 	} catch (error) {
 		console.error("AI content generation error:", error);
 		return {
-			description: `${extensionName} - A helpful extension for Obsidian Vault Copilot.`,
+			description: `${extensionName} - A helpful extension for Obsidian Torqena.`,
 			readme: `# ${extensionName}\n\n## Overview\n\nThis extension enhances your Obsidian experience.\n\n## Usage\n\nUse the command palette to access extension features.`
 		};
 	}
@@ -870,7 +870,7 @@ README.md content:`;
  * which is then surfaced in the wizard as the AI-generated image placeholder.
  *
  * @param app - The Obsidian app instance used for vault access
- * @param plugin - The Vault Copilot plugin instance (used to access the active AI service)
+ * @param plugin - The Torqena plugin instance (used to access the active AI service)
  * @param extensionPath - The path provided by the user for the extension (file or folder)
  * @param extensionId - The derived extension ID (used for logging only)
  * @param extensionName - Human-friendly extension name used in the SVG banner
@@ -923,7 +923,7 @@ export async function generateExtensionImageAuto(
 		}
 		
 		// Build a safe display name used in prompts and fallbacks
-		const safeName = (extensionName || extensionId || "Vault Copilot Extension").trim();
+		const safeName = (extensionName || extensionId || "Torqena Extension").trim();
 		const titleText = safeName.length > 40 ? `${safeName.slice(0, 37)}...` : safeName;
 		
 		// Helper: static SVG banner used as a fallback when AI is unavailable or returns invalid output
@@ -984,7 +984,7 @@ export async function generateExtensionImageAuto(
 		// Ask the AI provider to generate standalone SVG markup for the preview image
 		let svgResponse: string;
 		try {
-			const prompt = `You are a UI designer generating SVG preview icons for the Obsidian Vault Copilot extensions catalog. Based on the following README content, generate a vibrant, modern icon that matches the catalog's visual style.
+			const prompt = `You are a UI designer generating SVG preview icons for the Obsidian Torqena extensions catalog. Based on the following README content, generate a vibrant, modern icon that matches the catalog's visual style.
 
 Style Requirements (CRITICAL - match examples exactly):
 - Output a single, valid standalone SVG element
@@ -1129,7 +1129,7 @@ export async function generateDescriptionWithAI(
 		// Read extension files (supports both file and folder paths)
 		const extensionContent = await readExtensionContent(app, extensionPath, extensionId);
 		
-		const descPrompt = `You are helping generate a short catalog listing for an Obsidian Vault Copilot extension.
+		const descPrompt = `You are helping generate a short catalog listing for an Obsidian Torqena extension.
 
 Write a single, concise description of this extension that is at most 200 characters long (including spaces).
 - Focus on what it does and why it's useful.
@@ -1170,7 +1170,7 @@ ${extensionContent || `Extension Name: ${extensionName}\nExtension ID: ${extensi
 		
 	} catch (error) {
 		console.error("AI description generation error:", error);
-		const fallback = `${extensionName} - A helpful extension for Obsidian Vault Copilot.`;
+		const fallback = `${extensionName} - A helpful extension for Obsidian Torqena.`;
 		
 		if (descriptionInput) {
 			descriptionInput.value = fallback;

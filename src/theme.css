@@ -46,7 +46,10 @@ body.is-frameless .ws-tab-header-actions,
 body.is-frameless .ws-tab-header-actions button,
 body.is-frameless .ws-tab-close,
 body.is-frameless .ws-pane-menu-btn,
-body.is-frameless .ws-titlebar-right-sidebar-btn {
+body.is-frameless .ws-titlebar-right-sidebar-btn,
+body.is-frameless .ws-dock-tab-bar,
+body.is-frameless .ws-dock-tab,
+body.is-frameless .ws-dock-tab-close {
   position: relative;
   z-index: 10000;
   -webkit-app-region: no-drag;
@@ -376,8 +379,11 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 4px 8px;
+  height: 32px;
+  min-height: 32px;
+  padding: 0 8px;
   border-bottom: 1px solid var(--background-modifier-border);
+  background: var(--background-secondary);
   flex-shrink: 0;
 }
 
@@ -386,7 +392,9 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 4px 8px;
+  height: 32px;
+  min-height: 32px;
+  padding: 0 8px;
   border-bottom: 1px solid var(--background-modifier-border);
   flex-shrink: 0;
   background: var(--background-secondary);
@@ -436,8 +444,8 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   border-radius: var(--radius-s);
   color: var(--text-muted);
   cursor: pointer;
@@ -724,7 +732,7 @@ html, body {
 }
 
 .ws-pane-leaf.ws-pane-active {
-  outline: 1px solid var(--interactive-accent);
+  outline: 1px solid var(--background-modifier-border);
   outline-offset: -1px;
   z-index: 1;
 }
@@ -768,12 +776,12 @@ html, body {
 
 .ws-pane-resizer:hover,
 .ws-pane-resizer.is-dragging {
-  background: var(--interactive-accent);
+  background: var(--text-muted);
 }
 
 /* Drop zone indicators */
 .ws-pane-drop-target {
-  outline: 2px solid var(--interactive-accent);
+  outline: 2px solid var(--text-muted);
   outline-offset: -2px;
 }
 
@@ -782,7 +790,7 @@ html, body {
   position: absolute;
   pointer-events: none;
   z-index: 10;
-  background: color-mix(in srgb, var(--interactive-accent) 15%, transparent);
+  background: color-mix(in srgb, var(--text-muted) 15%, transparent);
   transition: all 0.1s ease;
 }
 
@@ -2221,41 +2229,434 @@ button:disabled {
 }
 
 /* ============================================================
-   Vault Picker (startup screen)
+   Vault Picker / Welcome Page (startup screen)
    ============================================================ */
 .vault-picker {
   position: fixed;
   inset: 0;
   z-index: 200;
-  background: var(--background-primary);
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-direction: column;
+  background: radial-gradient(ellipse at center, #2a2d35 0%, #1a1c22 60%, #111318 100%);
+  -webkit-app-region: drag;
+}
+
+.vault-picker * {
+  -webkit-app-region: no-drag;
 }
 
 .vault-picker-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   text-align: center;
+  max-width: 560px;
+  padding: 40px;
 }
 
-.vault-picker-content h1 {
-  font-size: 28px;
+/* Logo + wordmark row */
+.welcome-logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.welcome-logo-icon {
+  width: 56px;
+  height: 56px;
+  object-fit: contain;
+}
+
+.welcome-logo-wordmark {
+  font-size: 56px;
+  font-weight: 700;
+  color: #e0e0e4;
+  letter-spacing: -1px;
+  line-height: 1;
+}
+
+/* Divider line under logo area */
+.welcome-divider-top {
+  width: 100%;
+  height: 1px;
+  background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.08), transparent);
+  margin-bottom: 32px;
+}
+
+/* Tagline */
+.welcome-tagline {
+  font-size: 20px;
+  font-weight: 400;
+  color: #9a9ba2;
+  margin: 0 0 8px 0;
+  line-height: 1.5;
+}
+
+/* Subtitle */
+.welcome-subtitle {
+  font-size: 14px;
+  font-weight: 400;
+  color: #6c6d75;
+  margin: 0 0 40px 0;
+  line-height: 1.5;
+}
+
+/* Button container */
+.welcome-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  width: 100%;
+  max-width: 380px;
+}
+
+/* Primary CTA button */
+.welcome-btn-primary {
+  width: 100%;
+  padding: 14px 32px;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
   font-weight: 600;
-  margin-bottom: 12px;
+  color: #ffffff;
+  background: #4a6cf7;
+  cursor: pointer;
+  transition: background 0.15s ease, box-shadow 0.15s ease;
+  letter-spacing: 0.2px;
 }
 
-.vault-picker-content p {
-  color: var(--text-muted);
+.welcome-btn-primary:hover {
+  background: #3a5ce6;
+  box-shadow: 0 4px 16px rgba(74, 108, 247, 0.3);
+}
+
+.welcome-btn-primary:active {
+  background: #2f4fd4;
+}
+
+/* "or" separator */
+.welcome-or-separator {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  color: #6c6d75;
+  font-size: 13px;
+}
+
+.welcome-or-line {
+  flex: 1;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* Secondary button */
+.welcome-btn-secondary {
+  width: 100%;
+  padding: 14px 32px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 500;
+  color: #c0c1c8;
+  background: transparent;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+  letter-spacing: 0.2px;
+}
+
+.welcome-btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.welcome-btn-secondary:active {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+/* Error message */
+.picker-error {
+  color: #e93147;
+  font-size: 13px;
+  margin-top: 12px;
+  display: none;
+}
+
+/* ---- Select Workspace Screen ---- */
+
+/* Smaller logo variant for the select screen */
+.welcome-logo-sm {
   margin-bottom: 20px;
 }
 
-.vault-picker-content button {
-  font-size: var(--font-ui-medium);
-  padding: 10px 28px;
+.welcome-logo-icon-sm {
+  width: 32px;
+  height: 32px;
 }
 
-.picker-error {
-  color: var(--text-error);
-  margin-top: 12px;
+.welcome-logo-wordmark-sm {
+  font-size: 28px;
+}
+
+/* Glass card containing the workspace list */
+.ws-select-card {
+  width: 100%;
+  max-width: 520px;
+  padding: 32px 40px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  margin-bottom: 28px;
+}
+
+.ws-select-title {
+  font-size: 22px;
+  font-weight: 600;
+  color: #e0e0e4;
+  text-align: center;
+  margin: 0 0 24px 0;
+}
+
+/* Recent workspace list */
+.ws-recent-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.ws-recent-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  color: #c0c1c8;
+  font-size: 15px;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+  user-select: none;
+}
+
+.ws-recent-item:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: #e0e0e4;
+}
+
+.ws-recent-item:active {
+  background: rgba(74, 108, 247, 0.12);
+}
+
+.ws-recent-item-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #6c6d75;
+  flex-shrink: 0;
+}
+
+.ws-recent-item:hover .ws-recent-item-dot {
+  background: #4a6cf7;
+}
+
+.ws-recent-item-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ws-recent-item-path {
+  font-size: 12px;
+  color: #555;
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ws-recent-item:hover .ws-recent-item-path {
+  color: #6c6d75;
+}
+
+/* Empty state when no recent workspaces */
+.ws-recent-empty {
+  text-align: center;
+  color: #6c6d75;
+  font-size: 14px;
+  padding: 20px 0;
+}
+
+/* Bottom action buttons */
+.ws-select-actions {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+  max-width: 520px;
+}
+
+.ws-select-btn {
+  flex: 1;
+  padding: 12px 24px;
+  font-size: 15px;
+}
+
+/* ---- Create Workspace Form ---- */
+
+.ws-create-form {
+  width: 100%;
+  max-width: 480px;
+  margin-top: 24px;
+  padding: 32px 40px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.ws-create-title {
+  font-size: 24px;
+  font-weight: 600;
+  color: #e0e0e4;
+  text-align: center;
+  margin: 0 0 28px 0;
+}
+
+.ws-create-label {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  color: #9a9ba2;
+  margin-bottom: 8px;
+}
+
+.ws-create-input {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.25);
+  color: #e0e0e4;
+  font-size: 15px;
+  outline: none;
+  transition: border-color 0.15s;
+  margin-bottom: 20px;
+  box-sizing: border-box;
+}
+
+.ws-create-input::placeholder {
+  color: #555;
+}
+
+.ws-create-input:focus {
+  border-color: rgba(74, 108, 247, 0.5);
+}
+
+.ws-create-location-row {
+  display: flex;
+  gap: 0;
+  margin-bottom: 20px;
+}
+
+.ws-create-location-row .ws-create-input {
+  margin-bottom: 0;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+  flex: 1;
+  min-width: 0;
+  cursor: pointer;
+}
+
+.ws-create-choose-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-left: none;
+  border-radius: 0 8px 8px 0;
+  background: rgba(255, 255, 255, 0.06);
+  color: #c0c1c8;
+  font-size: 14px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+
+.ws-create-choose-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* Radio button group */
+.ws-create-type-group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 28px;
+}
+
+.ws-create-radio {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 15px;
+  color: #c0c1c8;
+  cursor: pointer;
+  user-select: none;
+}
+
+.ws-create-radio input[type="radio"] {
+  display: none;
+}
+
+.ws-create-radio-circle {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  background: transparent;
+  flex-shrink: 0;
+  position: relative;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.ws-create-radio input[type="radio"]:checked + .ws-create-radio-circle {
+  border-color: #4a6cf7;
+  background: #4a6cf7;
+}
+
+.ws-create-radio input[type="radio"]:checked + .ws-create-radio-circle::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #ffffff;
+  transform: translate(-50%, -50%);
+}
+
+/* Button row */
+.ws-create-buttons {
+  display: flex;
+  gap: 12px;
+}
+
+.ws-create-cancel-btn {
+  flex: 1;
+  padding: 12px 24px;
+}
+
+.ws-create-submit-btn {
+  flex: 1.4;
+  padding: 12px 24px;
 }
 
 /* ============================================================

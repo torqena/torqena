@@ -3,7 +3,7 @@
 
 /**
  * @module ToolCatalog
- * @description Centralized tool discovery and selection management for Vault Copilot.
+ * @description Centralized tool discovery and selection management for Torqena.
  *
  * The ToolCatalog aggregates tools from multiple sources and provides a unified
  * interface for tool filtering, enabling/disabling, and UI display. It serves as

@@ -31,7 +31,7 @@
       <div class="workspace-split mod-right-split">
         <div class="ws-right-tab-header">
           <div class="ws-right-tab-header-icons">
-            <div class="side-dock-ribbon-action ws-ribbon-chat clickable-icon is-active" aria-label="Chat">
+            <div class="side-dock-ribbon-action ws-ribbon-chat clickable-icon" aria-label="Chat">
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
             </div>
             <div class="side-dock-ribbon-action ws-ribbon-properties clickable-icon" aria-label="Properties">
@@ -50,18 +50,105 @@
     </div>
   </div>
 
-  <!-- Folder picker shown before vault is loaded -->
+  <!-- Welcome / Workspace Picker shown before vault is loaded -->
   <div id="vault-picker" class="vault-picker">
-    <div class="vault-picker-content">
-      <h1>Vault Copilot</h1>
-      <p>Select a local folder to use as your vault.</p>
-      <button id="pick-folder-btn" class="mod-cta">Open folder</button>
+    <!-- Screen 1: Welcome (first-time / no recent workspaces) -->
+    <div id="welcome-screen" class="vault-picker-content">
+      <div class="welcome-logo">
+        <img src="./ui/assets/Torqena.png" alt="Torqena" class="welcome-logo-icon" />
+        <span class="welcome-logo-wordmark">Torqena</span>
+      </div>
+      <div class="welcome-divider-top"></div>
+      <p class="welcome-tagline">The workspace that turns documents into execution.</p>
+      <p class="welcome-subtitle">Your files stay on your device. No cloud required.</p>
+      <div class="welcome-actions">
+        <button id="create-workspace-btn" class="welcome-btn-primary">Create New Workspace</button>
+        <div class="welcome-or-separator">
+          <div class="welcome-or-line"></div>
+          <span>or</span>
+          <div class="welcome-or-line"></div>
+        </div>
+        <button id="pick-folder-btn" class="welcome-btn-secondary">Open Existing Folder</button>
+      </div>
       <p id="picker-error" class="picker-error" style="display:none"></p>
+    </div>
+
+    <!-- Screen 2: Select Workspace (shown when recent workspaces exist) -->
+    <div id="select-workspace-screen" class="vault-picker-content" style="display:none">
+      <div class="welcome-logo welcome-logo-sm">
+        <img src="./ui/assets/Torqena.png" alt="Torqena" class="welcome-logo-icon welcome-logo-icon-sm" />
+        <span class="welcome-logo-wordmark welcome-logo-wordmark-sm">Torqena</span>
+      </div>
+      <div class="ws-select-card">
+        <h2 class="ws-select-title">Select Workspace</h2>
+        <ul id="ws-recent-list" class="ws-recent-list"></ul>
+      </div>
+      <div class="ws-select-actions">
+        <button id="select-create-btn" class="welcome-btn-primary ws-select-btn">Create New Workspace</button>
+        <button id="select-open-btn" class="welcome-btn-secondary ws-select-btn">Open Existing Folder</button>
+      </div>
+      <p id="select-error" class="picker-error" style="display:none"></p>
+    </div>
+
+    <!-- Screen 3: Create Team Workspace form -->
+    <div id="create-workspace-screen" class="vault-picker-content" style="display:none">
+      <div class="welcome-logo">
+        <img src="./ui/assets/Torqena.png" alt="Torqena" class="welcome-logo-icon" />
+        <span class="welcome-logo-wordmark">Torqena</span>
+      </div>
+      <div class="ws-create-form">
+        <h2 class="ws-create-title">Create Team Workspace</h2>
+
+        <label class="ws-create-label" for="ws-team-name">Team Name:</label>
+        <input id="ws-team-name" class="ws-create-input" type="text" placeholder="Acme Product Team" autocomplete="off" spellcheck="false" />
+
+        <label class="ws-create-label" for="ws-location">Location:</label>
+        <div class="ws-create-location-row">
+          <input id="ws-location" class="ws-create-input ws-create-location-input" type="text" placeholder="~/Documents/Torqena" readonly />
+          <button id="ws-choose-folder" class="ws-create-choose-btn">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"/></svg>
+            Choose Folder
+          </button>
+        </div>
+
+        <div class="ws-create-type-group">
+          <label class="ws-create-radio">
+            <input type="radio" name="ws-type" value="personal" />
+            <span class="ws-create-radio-circle"></span>
+            This is my personal workspace
+          </label>
+          <label class="ws-create-radio">
+            <input type="radio" name="ws-type" value="team" checked />
+            <span class="ws-create-radio-circle"></span>
+            This is for a team
+          </label>
+        </div>
+
+        <div class="ws-create-buttons">
+          <button id="ws-create-cancel" class="welcome-btn-secondary ws-create-cancel-btn">Cancel</button>
+          <button id="ws-create-submit" class="welcome-btn-primary ws-create-submit-btn">Create Workspace</button>
+        </div>
+        <p id="ws-create-error" class="picker-error" style="display:none"></p>
+      </div>
     </div>
   </div>
 
   <!-- Polyfills must load before main: Buffer, process, setImmediate -->
+  <script>
+    // Inline diagnostic: does ANY script run?
+    console.log("[DIAG] inline script running");
+    window.__diagScriptRan = true;
+    window.addEventListener("error", function(e) {
+      console.error("[DIAG] Global error:", e.message, e.filename, e.lineno);
+    });
+    window.addEventListener("unhandledrejection", function(e) {
+      console.error("[DIAG] Unhandled rejection:", e.reason);
+    });
+  </script>
   <script type="module" src="./polyfills.ts"></script>
+  <script type="module">
+    console.log("[DIAG] inline ES module works");
+  </script>
   <script type="module" src="./shell-main.ts"></script>
 </body>
 </html>

@@ -36,7 +36,7 @@ export function renderWelcomeScreen(container: HTMLElement, callbacks: ScreenCal
 	const wrapper = container.createDiv({ cls: "welcome-wrapper" });
 
 	// --- Hero ---
-	wrapper.createEl("h1", { text: "Submit an Extension to Vault Copilot", cls: "welcome-title" });
+	wrapper.createEl("h1", { text: "Submit an Extension to Torqena", cls: "welcome-title" });
 	wrapper.createEl("p", {
 		text: "Turn your extension into a ready-to-merge pull request — in minutes.",
 		cls: "welcome-subtitle"

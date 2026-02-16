@@ -1,6 +1,6 @@
 /**
  * @module settings/defaults
- * @description Default values and constants for Vault Copilot settings.
+ * @description Default values and constants for Torqena settings.
  *
  * This module contains all default configuration values, fallback models,
  * and constants used throughout the plugin settings system.

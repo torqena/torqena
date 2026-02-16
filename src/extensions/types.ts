@@ -5,9 +5,9 @@
 
 /**
  * @module extensions/types
- * @description Type definitions for Vault Copilot Extension Marketplace
+ * @description Type definitions for Torqena Extension Marketplace
  * 
- * This module defines the complete type system for managing extensions in Vault Copilot.
+ * This module defines the complete type system for managing extensions in Torqena.
  * Extensions can be agents, voice agents, prompts, skills, or MCP servers that extend
  * the capabilities of the plugin.
  */
@@ -147,7 +147,7 @@ export interface MarketplaceExtension {
 	/** Total size of all files in the package */
 	totalSizeBytes: string;
 	
-	/** Minimum Vault Copilot version required */
+	/** Minimum Torqena version required */
 	requiredPluginVersion: string;
 	
 	/** Optional link to source code repository */
@@ -159,7 +159,7 @@ export interface MarketplaceExtension {
 	/** List of files included in this extension */
 	packageContents: PackagedFile[];
 	
-	/** List of Vault Copilot tool names this extension uses */
+	/** List of Torqena tool names this extension uses */
 	requiredCapabilities: string[];
 	
 	/** Other extension IDs that must be installed first */

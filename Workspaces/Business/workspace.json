@@ -1,0 +1,109 @@
+{
+  "schemaVersion": 1,
+
+  "workspaceId": "ws_biz_a4f71c9d03",
+  "name": "Business",
+  "description": "Business operations, strategy, and planning workspace",
+
+  "createdAt": "2026-02-15T21:00:00Z",
+  "lastOpenedAt": "2026-02-15T21:00:00Z",
+
+  "owner": {
+    "id": "guid-1234-5678-9012",
+    "displayName": "Dan Shue"
+  },
+
+  "theme": {
+    "mode": "dark",
+    "accentColor": "#3B82F6",
+    "icon": "briefcase",
+    "customLogoPath": null
+  },
+
+  "layout": {
+    "defaultView": "home",
+    "sidebarCollapsed": false,
+    "agentPanelVisible": true,
+    "agentPanelWidth": 360,
+    "lastWindowBounds": {
+      "x": 120,
+      "y": 80,
+      "width": 1440,
+      "height": 920,
+      "maximized": false
+    }
+  },
+
+  "structure": {
+    "folders": [
+      {
+        "id": "dashboards",
+        "name": "Dashboards",
+        "description": "Dashboard views and analytics",
+        "icon": "view-dashboard",
+        "folderPath": "dashboards"
+      },
+      {
+        "id": "meetings",
+        "name": "Meetings",
+        "description": "Meeting notes, agendas, and recordings",
+        "icon": "calendar",
+        "folderPath": "meetings"
+      },
+      {
+        "id": "documents",
+        "name": "Documents",
+        "description": "Project documents, specifications, and reference materials",
+        "icon": "file-text",
+        "folderPath": "documents"
+      },
+      {
+        "id": "tasks",
+        "name": "Tasks",
+        "description": "Task lists, assignments, and progress tracking",
+        "icon": "check-square",
+        "folderPath": "tasks"
+      }
+    ]
+  },
+
+  "extensions": {
+    "installed": []
+  },
+
+  "ai": {
+    "agents": [],
+    "skills": [],
+    "prompts": [],
+    "enabled": true,
+    "defaultModel": "gpt-4.1",
+    "behavior": {
+      "executionMode": "review-first",
+      "approvalRequired": true,
+      "autoExtractTasks": false,
+      "autoSummarizeMeetings": true
+    },
+    "permissions": {
+      "canModifyFiles": true,
+      "canCreateFiles": true,
+      "canDeleteFiles": false,
+      "canCallExternalTools": false
+    },
+    "memory": {
+      "enableEmbeddings": false,
+      "embeddingModel": null,
+      "lastIndexedAt": null
+    }
+  },
+
+  "indexing": {
+    "watchMode": "filesystem",
+    "lastIndexedAt": null
+  },
+
+  "collaboration": {
+    "enabled": false,
+    "members": [],
+    "roles": []
+  }
+}

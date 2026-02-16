@@ -1,0 +1,141 @@
+{
+  "schemaVersion": 1,
+
+  "workspaceId": "ws_8c9e32ab12",
+  "name": "Acme Product Team",
+  "description": "Product development workspace for Acme SaaS platform",
+
+  "createdAt": "2025-01-15T21:12:33Z",
+  "lastOpenedAt": "2025-01-20T18:04:12Z",
+
+  "owner": {
+    "id": "guid-1234-5678-9012",
+    "displayName": "Dan Shue"
+  },
+
+  "theme": {
+    "mode": "dark",
+    "accentColor": "#3B82F6",
+    "icon": "rocket",
+    "customLogoPath": null
+  },
+
+  "layout": {
+    "defaultView": "home",
+    "sidebarCollapsed": false,
+    "agentPanelVisible": true,
+    "agentPanelWidth": 360,
+    "lastWindowBounds": {
+      "x": 120,
+      "y": 80,
+      "width": 1440,
+      "height": 920,
+      "maximized": false
+    }
+  },
+
+  "structure": {
+    "folders": [
+      {
+        "id": "dashboards",
+        "name": "Dashboards",
+        "description": "Dashboard views and analytics",
+        "icon": "view-dashboard",
+        "folderPath": "dashboards"
+      },
+      {
+        "id": "meetings",
+        "name": "Meetings",
+		"description": "Meeting notes, agendas, and recordings",
+        "icon": "calendar",
+        "folderPath": "meetings"
+      },
+      {
+        "id": "documents",
+        "name": "Documents",
+        "description": "Project documents, specifications, and reference materials",
+        "icon": "file-text",
+        "folderPath": "documents"
+      },
+      {
+        "id": "tasks",
+        "name": "Tasks",
+        "description": "Task lists, assignments, and progress tracking",
+        "icon": "check-square",
+        "folderPath": "tasks"
+      }
+    ]
+  },
+
+  "extensions": {
+    "installed": [
+      {
+        "id": "meeting-extractor",
+        "version": "1.0.0",
+        "enabled": true
+      }
+    ]
+  },
+
+  "ai": {
+		"agents": [
+			{
+				"id": "agent-1",
+				"name": "Agent 1",
+				"description": "An autonomous agent that can execute tasks, call tools, and interact with the workspace to help you get things done.",
+				"icon": "rocket",
+				"filePath": "agents/agent-1/agent.md"
+			}
+		],
+		"skills": [
+			{
+				"id": "tasks",
+				"name": "Tasks",
+				"description": "Manages tasks, including creation, editing, and tracking using emoji-based syntax.",
+				"icon": "envelope",
+				"filePath": "skills/tasks/"
+			}
+		],
+		"prompts": [
+			{
+				"id": "project-update-summary",
+				"name": "Project Update Summary",
+				"description": "Summarizes the latest project updates from meeting notes and task statuses.",
+				"icon": "document",
+				"filePath": "prompts/project-update-summary.txt"
+			}
+		],
+    "enabled": true,
+    "defaultModel": "gpt-4.1",
+    "behavior": {
+      "executionMode": "review-first", 
+      "approvalRequired": true,
+      "autoExtractTasks": false,
+      "autoSummarizeMeetings": true
+    },
+
+    "permissions": {
+      "canModifyFiles": true,
+      "canCreateFiles": true,
+      "canDeleteFiles": false,
+      "canCallExternalTools": false
+    },
+
+    "memory": {
+      "enableEmbeddings": false,
+      "embeddingModel": null,
+      "lastIndexedAt": null
+    }
+  },
+
+  "indexing": {
+    "watchMode": "filesystem",
+    "lastIndexedAt": "2025-01-20T18:03:10Z"
+  },
+
+  "collaboration": {
+    "enabled": false,
+    "members": [],
+    "roles": []
+  }
+}

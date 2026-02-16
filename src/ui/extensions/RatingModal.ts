@@ -6,7 +6,7 @@
 /**
  * @module RatingModal
  * @description Obsidian Modal for submitting or editing 1–5 star ratings with optional
- * comments for Vault Copilot extensions.
+ * comments for Torqena extensions.
  *
  * Features:
  * - Interactive star-rating widget (1–5) with hover preview
@@ -112,7 +112,7 @@ const STAR_FILLED = "★";
 
 /**
  * Interactive Obsidian Modal that lets users submit or update a 1–5 star
- * rating with an optional comment for a Vault Copilot extension.
+ * rating with an optional comment for a Torqena extension.
  *
  * @example
  * ```typescript

@@ -5,7 +5,7 @@
 
 /**
  * @module ExtensionSubmissionModal
- * @description Multi-step modal for submitting extensions to the Vault Copilot catalog
+ * @description Multi-step modal for submitting extensions to the Torqena catalog
  * 
  * Provides a user-friendly interface for:
  * - Selecting and validating extensions
@@ -932,7 +932,7 @@ export class ExtensionSubmissionModal extends Modal {
 			let description =
 				data.description ||
 				this.generatedDescription ||
-				`${data.extensionName} - An extension for Obsidian Vault Copilot.`;
+				`${data.extensionName} - An extension for Obsidian Torqena.`;
 
 			// Enforce the 200-character manifest description limit at write time so
 			// newly created manifests always pass validation.
@@ -1012,7 +1012,7 @@ export class ExtensionSubmissionModal extends Modal {
 			const readmeContent =
 				data.readme ||
 				this.generatedReadme ||
-				`# ${data.extensionName}\n\nA helpful extension for Obsidian Vault Copilot.`;
+				`# ${data.extensionName}\n\nA helpful extension for Obsidian Torqena.`;
 			fs.writeFileSync(readmePath, readmeContent, "utf-8");
 		}
 
@@ -1222,7 +1222,7 @@ export class ExtensionSubmissionModal extends Modal {
 		if (!this.plugin) {
 			showInlineMessage(
 				messageContainer,
-				"Extension submission requires the Vault Copilot plugin instance.",
+				"Extension submission requires the Torqena plugin instance.",
 				"error"
 			);
 			return;

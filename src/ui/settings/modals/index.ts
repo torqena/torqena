@@ -1,6 +1,6 @@
 /**
  * @module Modals
- * @description Settings modals for Vault Copilot configuration.
+ * @description Settings modals for Torqena configuration.
  *
  * This module exports modals used in the settings interface for:
  * - Creating and managing secrets (API keys)

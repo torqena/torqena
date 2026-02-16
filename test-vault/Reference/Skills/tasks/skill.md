@@ -1,11 +1,11 @@
 ---
-name: obsidian-tasks
+name: tasks
 description: Create and edit tasks using Obsidian Tasks plugin syntax. Use when creating tasks with due dates, start dates, scheduled dates, priorities, or recurrence in Obsidian markdown files. Triggers on requests to add tasks, set task dates, mark tasks complete, or query tasks.
 ---
 
-# Obsidian Tasks
+# Tasks
 
-Syntax reference for the Obsidian Tasks plugin using emoji format.
+Syntax reference for the Tasks using emoji format.
 
 ## Date Emojis
 

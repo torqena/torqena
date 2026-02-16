@@ -20,7 +20,7 @@
  * 1. `.github/copilot-mcp-servers.json` (per-repo config)
  * 2. VS Code settings (`mcp.json` or settings.json)
  * 3. Claude Desktop config (`~/.config/claude/`)
- * 4. Vault-specific config (`.obsidian/mcp.json`)
+ * 4. workspace-specific config (`.obsidian/mcp.json`)
  *
  * ## Usage
  *
@@ -53,8 +53,8 @@ import {
 	McpServerStatus,
 	McpConnectionStatus,
 	DiscoveredMcpServer,
-	VaultMcpConfig,
-	DEFAULT_VAULT_MCP_CONFIG,
+	WorkspaceMcpConfig,
+	DEFAULT_WORKSPACE_MCP_CONFIG,
 	isStdioConfig,
 	McpTool,
 } from "./McpTypes";
@@ -88,7 +88,7 @@ export class McpManager {
 	private app: App;
 	private servers = new Map<string, DiscoveredMcpServer>();
 	private clients = new Map<string, McpClient>();
-	private vaultConfig: VaultMcpConfig = DEFAULT_VAULT_MCP_CONFIG;
+	private workspaceConfig: WorkspaceMcpConfig = DEFAULT_WORKSPACE_MCP_CONFIG;
 	private listeners = new Set<McpManagerListener>();
 	private initialized = false;
 
@@ -102,8 +102,8 @@ export class McpManager {
 	async initialize(): Promise<void> {
 		if (this.initialized) return;
 
-		// Load vault-specific config
-		await this.loadVaultConfig();
+		// Load workspace-specific config
+		await this.loadworkspaceConfig();
 
 		// Only auto-discover on desktop (requires filesystem access and local processes)
 		if (supportsLocalProcesses()) {
@@ -176,19 +176,19 @@ export class McpManager {
 	}
 
 	/**
-	 * Get vault config
+	 * Get workspace config
 	 */
-	getVaultConfig(): VaultMcpConfig {
-		return this.vaultConfig;
+	getworkspaceConfig(): WorkspaceMcpConfig {
+		return this.workspaceConfig;
 	}
 
 	/**
-	 * Check if a server is enabled (considering vault overrides)
+	 * Check if a server is enabled (considering workspace overrides)
 	 */
 	isServerEnabled(id: string): boolean {
-		// Vault override takes precedence
-		if (id in this.vaultConfig.enabled) {
-			return this.vaultConfig.enabled[id] ?? false;
+		// Workspace override takes precedence
+		if (id in this.workspaceConfig.enabled) {
+			return this.workspaceConfig.enabled[id] ?? false;
 		}
 		// Otherwise use the config's enabled flag
 		const server = this.servers.get(id);
@@ -199,8 +199,8 @@ export class McpManager {
 	 * Set server enabled state
 	 */
 	async setServerEnabled(id: string, enabled: boolean): Promise<void> {
-		this.vaultConfig.enabled[id] = enabled;
-		await this.saveVaultConfig();
+		this.workspaceConfig.enabled[id] = enabled;
+		await this.saveworkspaceConfig();
 
 		// Start or stop the server based on new state
 		if (enabled) {
@@ -214,15 +214,15 @@ export class McpManager {
 	 * Check if a server should auto-start
 	 */
 	isServerAutoStart(id: string): boolean {
-		return this.vaultConfig.autoStart[id] ?? false;
+		return this.workspaceConfig.autoStart[id] ?? false;
 	}
 
 	/**
 	 * Set server auto-start state
 	 */
 	async setServerAutoStart(id: string, autoStart: boolean): Promise<void> {
-		this.vaultConfig.autoStart[id] = autoStart;
-		await this.saveVaultConfig();
+		this.workspaceConfig.autoStart[id] = autoStart;
+		await this.saveworkspaceConfig();
 	}
 
 	/**
@@ -436,7 +436,7 @@ export class McpManager {
 		
 		// Process discovery results
 		for (const result of results) {
-			// Skip disabled sources based on vault config
+			// Skip disabled sources based on workspace config
 			if (!this.isSourceEnabled(result.source)) {
 				continue;
 			}
@@ -455,8 +455,8 @@ export class McpManager {
 			}
 		}
 
-		// Add vault-specific servers
-		for (const config of this.vaultConfig.servers) {
+		// Add workspace-specific servers
+		for (const config of this.workspaceConfig.servers) {
 			const existing = this.servers.get(config.id);
 			const status: McpServerStatus = existing?.status ?? {
 				id: config.id,
@@ -479,16 +479,16 @@ export class McpManager {
 	private isSourceEnabled(source: string): boolean {
 		switch (source) {
 			case "claude-desktop":
-				return this.vaultConfig.autoDiscovery.claudeDesktop;
+				return this.workspaceConfig.autoDiscovery.claudeDesktop;
 			case "vscode":
 			case "vscode-insiders":
-				return this.vaultConfig.autoDiscovery.vscode;
+				return this.workspaceConfig.autoDiscovery.vscode;
 			case "cursor":
-				return this.vaultConfig.autoDiscovery.cursor;
+				return this.workspaceConfig.autoDiscovery.cursor;
 			case "copilot-cli":
-				return this.vaultConfig.autoDiscovery.copilotCli;
+				return this.workspaceConfig.autoDiscovery.copilotCli;
 			case "docker":
-				return this.vaultConfig.autoDiscovery.docker;
+				return this.workspaceConfig.autoDiscovery.docker;
 			default:
 				return true;
 		}
@@ -520,53 +520,53 @@ export class McpManager {
 	}
 
 	/**
-	 * Get the vault config file path
+	 * Get the workspace config file path
 	 */
-	private getVaultConfigPath(): string {
+	private getworkspaceConfigPath(): string {
 		const vaultPath = (this.app.vault.adapter as any).basePath;
 		return path.join(vaultPath, ".obsidian", "mcp-servers.json");
 	}
 
 	/**
-	 * Load vault-specific MCP configuration
+	 * Load workspace-specific MCP configuration
 	 */
-	private async loadVaultConfig(): Promise<void> {
-		const configPath = this.getVaultConfigPath();
+	private async loadworkspaceConfig(): Promise<void> {
+		const configPath = this.getworkspaceConfigPath();
 		
 		try {
 			if (fs.existsSync(configPath)) {
 				const content = fs.readFileSync(configPath, "utf-8");
-				const parsed = JSON.parse(content) as Partial<VaultMcpConfig>;
+				const parsed = JSON.parse(content) as Partial<WorkspaceMcpConfig>;
 				
 				// Merge with defaults
-				this.vaultConfig = {
-					...DEFAULT_VAULT_MCP_CONFIG,
+				this.workspaceConfig = {
+					...DEFAULT_WORKSPACE_MCP_CONFIG,
 					...parsed,
 					autoStart: {
-						...DEFAULT_VAULT_MCP_CONFIG.autoStart,
+						...DEFAULT_WORKSPACE_MCP_CONFIG.autoStart,
 						...parsed.autoStart,
 					},
 					autoDiscovery: {
-						...DEFAULT_VAULT_MCP_CONFIG.autoDiscovery,
+						...DEFAULT_WORKSPACE_MCP_CONFIG.autoDiscovery,
 						...parsed.autoDiscovery,
 					},
 				};
 				
-				console.log("[McpManager] Loaded vault config");
+				console.log("[McpManager] Loaded workspace config");
 			}
 		} catch (error) {
-			console.warn("[McpManager] Failed to load vault config:", error);
+			console.warn("[McpManager] Failed to load workspace config:", error);
 		}
 	}
 
 	/**
-	 * Save vault-specific MCP configuration
+	 * Save workspace-specific MCP configuration
 	 */
-	private async saveVaultConfig(): Promise<void> {
-		const configPath = this.getVaultConfigPath();
+	private async saveworkspaceConfig(): Promise<void> {
+		const configPath = this.getworkspaceConfigPath();
 		
 		try {
-			const content = JSON.stringify(this.vaultConfig, null, 2);
+			const content = JSON.stringify(this.workspaceConfig, null, 2);
 			const dir = path.dirname(configPath);
 			
 			if (!fs.existsSync(dir)) {
@@ -574,9 +574,9 @@ export class McpManager {
 			}
 			
 			fs.writeFileSync(configPath, content, "utf-8");
-			console.log("[McpManager] Saved vault config");
+			console.log("[McpManager] Saved workspace config");
 		} catch (error) {
-			console.error("[McpManager] Failed to save vault config:", error);
+			console.error("[McpManager] Failed to save workspace config:", error);
 		}
 	}
 
@@ -584,9 +584,9 @@ export class McpManager {
 	 * Add a manual HTTP MCP server
 	 */
 	async addManualServer(config: McpServerConfig): Promise<void> {
-		// Add to vault config
-		this.vaultConfig.servers.push(config);
-		await this.saveVaultConfig();
+		// Add to workspace config
+		this.workspaceConfig.servers.push(config);
+		await this.saveworkspaceConfig();
 
 		// Add to discovered servers
 		const status: McpServerStatus = {
@@ -614,9 +614,9 @@ export class McpManager {
 			await this.stopServer(id);
 		}
 
-		// Remove from vault config
-		this.vaultConfig.servers = this.vaultConfig.servers.filter(s => s.id !== id);
-		await this.saveVaultConfig();
+		// Remove from workspace config
+		this.workspaceConfig.servers = this.workspaceConfig.servers.filter(s => s.id !== id);
+		await this.saveworkspaceConfig();
 
 		// Remove from discovered servers
 		this.servers.delete(id);

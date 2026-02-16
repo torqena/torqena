@@ -24,3 +24,5 @@
 @import "./mobile.css";
 @import "./extensions.css";
 @import "./automations.css";
+@import "./dock-panel.css";
+@import "./workspace-navigator.css";

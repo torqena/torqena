@@ -1,6 +1,6 @@
 /**
  * @module mcp
- * @description Model Context Protocol (MCP) implementation for Vault Copilot.
+ * @description Model Context Protocol (MCP) implementation for Torqena.
  * 
  * This module provides MCP client implementations, configuration discovery,
  * and tool operations for integrating with MCP servers.

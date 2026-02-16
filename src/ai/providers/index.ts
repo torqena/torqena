@@ -1,6 +1,6 @@
 /**
  * @module providers
- * @description AI Provider implementations for Vault Copilot.
+ * @description AI Provider implementations for Torqena.
  * 
  * This module exports all AI provider classes and their factory.
  * 

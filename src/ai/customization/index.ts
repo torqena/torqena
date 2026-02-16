@@ -1,6 +1,6 @@
 /**
  * @module customization
- * @description User customization loaders for Vault Copilot.
+ * @description User customization loaders for Torqena.
  * 
  * This module provides loading and caching of user-defined prompts,
  * skills, and agent configurations from the vault.

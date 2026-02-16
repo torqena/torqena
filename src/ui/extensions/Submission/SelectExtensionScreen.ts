@@ -97,7 +97,7 @@ export function renderSelectExtensionScreen(
 	const headerText = header.createDiv({ cls: "select-step-header-text" });
 	headerText.createEl("h2", { text: `Step 1 of ${totalSteps} — Select Extension`, cls: "select-step-title" });
 	headerText.createEl("p", { cls: "select-step-subtitle" }).innerHTML =
-		"Choose the extension you want to submit to the <strong>Vault Copilot</strong> › catalog.";
+		"Choose the extension you want to submit to the <strong>Torqena</strong> › catalog.";
 
 	// ── Two-column body ──
 	const columns = container.createDiv({ cls: "select-columns" });
@@ -123,7 +123,7 @@ export function renderSelectExtensionScreen(
 		if (opt.value === initialType) el.selected = true;
 	});
 
-	typeCard.createEl("p", { text: "This determines how Vault Copilot interprets your files.", cls: "select-card-subhint" });
+	typeCard.createEl("p", { text: "This determines how Torqena interprets your files.", cls: "select-card-subhint" });
 
 	// "What's the difference?" link
 	const diffLink = typeCard.createDiv({ cls: "select-type-diff-link" });
@@ -223,7 +223,7 @@ export function renderSelectExtensionScreen(
 		span.createEl("strong", { text: "extension folder" });
 		span.appendText(" has a ");
 		span.createEl("strong", { text: "manifest.json file" });
-		span.appendText(", it will be used. Otherwise, Vault Copilot will create one automatically.");
+		span.appendText(", it will be used. Otherwise, Torqena will create one automatically.");
 	};
 	updateManifestText();
 

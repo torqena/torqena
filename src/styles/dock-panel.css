@@ -1,0 +1,173 @@
+/*---------------------------------------------------------------------------------------------
+ *  DockPanel — mixed tab bar styles for dockable widget system
+ *--------------------------------------------------------------------------------------------*/
+
+/* ── Panel container ──────────────────────────────────────── */
+
+.ws-dock-panel {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	min-height: 0;
+}
+
+.ws-dock-pane-root {
+	display: flex;
+	flex-direction: column;
+	flex: 1;
+	height: 100%;
+	min-height: 0;
+}
+
+.ws-dock-pane-leaf {
+	display: flex;
+	flex-direction: column;
+	flex: 1;
+	min-height: 0;
+	min-width: 0;
+	overflow: hidden;
+	position: relative;
+}
+
+/* ── Tab bar ──────────────────────────────────────────────── */
+
+.ws-dock-tab-bar {
+	display: flex;
+	align-items: center;
+	gap: 0;
+	height: 32px;
+	min-height: 32px;
+	background: var(--background-secondary);
+	border-bottom: 1px solid var(--background-modifier-border);
+	overflow-x: auto;
+	overflow-y: hidden;
+	scrollbar-width: none;
+	-webkit-overflow-scrolling: touch;
+}
+
+.ws-dock-tab-bar::-webkit-scrollbar {
+	display: none;
+}
+
+/* ── Individual tab ───────────────────────────────────────── */
+
+.ws-dock-tab {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	padding: 0 10px;
+	height: 100%;
+	cursor: pointer;
+	white-space: nowrap;
+	font-size: 12px;
+	color: var(--text-muted);
+	border-right: 1px solid var(--background-modifier-border);
+	user-select: none;
+	transition: background 0.12s ease, color 0.12s ease;
+}
+
+.ws-dock-tab:hover {
+	background: var(--background-modifier-hover);
+	color: var(--text-normal);
+}
+
+.ws-dock-tab.is-active {
+	background: var(--background-primary);
+	color: var(--text-normal);
+	border-bottom: 2px solid var(--text-muted);
+}
+
+.ws-dock-tab.is-dragging {
+	opacity: 0.5;
+}
+
+/* ── Tab label ────────────────────────────────────────────── */
+
+.ws-dock-tab-label {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	max-width: 140px;
+}
+
+/* ── Tab close button ─────────────────────────────────────── */
+
+.ws-dock-tab-close {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 16px;
+	height: 16px;
+	border-radius: 3px;
+	opacity: 0;
+	transition: opacity 0.12s ease, background 0.12s ease;
+	cursor: pointer;
+}
+
+.ws-dock-tab:hover .ws-dock-tab-close,
+.ws-dock-tab.is-active .ws-dock-tab-close {
+	opacity: 0.6;
+}
+
+.ws-dock-tab-close:hover {
+	opacity: 1 !important;
+	background: var(--background-modifier-hover);
+}
+
+/* ── Content stack ────────────────────────────────────────── */
+
+.ws-dock-content-stack {
+	flex: 1;
+	min-height: 0;
+	position: relative;
+	overflow: hidden;
+}
+
+.ws-dock-tab-content {
+	position: absolute;
+	inset: 0;
+	overflow: auto;
+}
+
+.ws-dock-tab-content.ws-dock-editor-content {
+	display: flex;
+	flex-direction: column;
+}
+
+/* ── Drop zone indicators ─────────────────────────────────── */
+
+.ws-dock-pane-leaf.ws-pane-drop-target {
+	position: relative;
+}
+
+.ws-dock-pane-leaf.ws-pane-drop-target::after {
+	content: "";
+	position: absolute;
+	inset: 0;
+	pointer-events: none;
+	z-index: 100;
+	border: 2px solid var(--text-muted);
+	border-radius: 4px;
+	opacity: 0.5;
+}
+
+.ws-dock-pane-leaf.ws-drop-left::after {
+	right: 50%;
+}
+
+.ws-dock-pane-leaf.ws-drop-right::after {
+	left: 50%;
+}
+
+.ws-dock-pane-leaf.ws-drop-top::after {
+	bottom: 50%;
+}
+
+.ws-dock-pane-leaf.ws-drop-bottom::after {
+	top: 50%;
+}
+
+/* ── Active panel highlight ───────────────────────────────── */
+
+.ws-dock-pane-leaf.ws-pane-active > .ws-dock-panel > .ws-dock-tab-bar {
+	border-bottom-color: var(--background-modifier-border);
+}
