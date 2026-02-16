@@ -8,63 +8,53 @@ on:
 
 jobs:
   build:
-    name: build
+    name: Build
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
-      
+
       - name: Install dependencies
         run: npm ci
-      
-      - name: Build plugin
-        run: npm run build
-      
+
+      - name: Build renderer
+        run: npm run build:shell
+
       - name: Check build artifacts
         run: |
-          if [ ! -f main.js ]; then
-            echo "Error: main.js not generated"
+          if [ ! -d apps/desktop/dist ]; then
+            echo "Error: apps/desktop/dist/ directory not generated"
             exit 1
           fi
-          echo "✓ Build successful: main.js created"
-      
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: plugin-build
-          path: |
-            main.js
-            manifest.json
-            styles.css
-          retention-days: 7
+          echo "✓ Build successful: apps/desktop/dist/ created"
 
   test:
-    name: test
+    name: Test
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
-      
+
       - name: Install dependencies
         run: npm ci
-      
+
       - name: Run tests
         run: npm test
-      
+
       - name: Upload coverage reports
         if: always()
         uses: actions/upload-artifact@v4
@@ -73,26 +63,23 @@ jobs:
           path: coverage/
           retention-days: 7
 
-  # Lint is now in separate workflow (lint.yml) to match branch protection expectations
-  # This allows the "lint" status check to be tracked independently
-
   typecheck:
     name: Type Check
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
-      
+
       - name: Install dependencies
         run: npm ci
-      
+
       - name: Type check
         run: npx tsc --noEmit --skipLibCheck
 
@@ -101,7 +88,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [build, test, typecheck]
     if: always()
-    
+
     steps:
       - name: Check all jobs
         run: |

@@ -36,5 +36,5 @@ Start-Sleep -Seconds 2
 Push-Location $repoRoot
 $env:NODE_ENV = "development"
 $env:VITE_DEV_SERVER_URL = "http://localhost:$port"
-npx electron electron/main.cjs
+npx electron apps/desktop/electron/main.cjs
 Pop-Location

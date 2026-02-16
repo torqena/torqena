@@ -1,0 +1,22 @@
+appId: com.torqena.app
+productName: Torqena
+
+files:
+  - dist/**/*
+  - electron/**/*
+
+extraResources:
+  - from: electron
+    to: electron
+
+directories:
+  output: release
+
+win:
+  target: nsis
+
+mac:
+  target: dmg
+
+linux:
+  target: AppImage

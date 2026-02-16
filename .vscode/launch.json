@@ -8,7 +8,7 @@
             "runtimeExecutable": "${workspaceFolder}/node_modules/.bin/electron.cmd",
             "runtimeArgs": [
                 "--remote-debugging-port=9222",
-                "electron/main.cjs"
+                "apps/desktop/electron/main.cjs"
             ],
             "env": {
                 "NODE_ENV": "development"
@@ -27,7 +27,7 @@
             "sourceMaps": true,
             "sourceMapPathOverrides": {
                 "/@fs/*": "${workspaceFolder}/*",
-                "/src/*": "${workspaceFolder}/src/*"
+                "/src/*": "${workspaceFolder}/apps/desktop/src/*"
             },
             "timeout": 30000
         },

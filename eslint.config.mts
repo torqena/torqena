@@ -1,5 +1,5 @@
-import tseslint from 'typescript-eslint';
-import globals from "globals";
+import { tseslint, recommendedConfigs, sharedRules } from './packages/config/eslint.config.mts';
+import type { ConfigArray } from 'typescript-eslint';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 
@@ -10,49 +10,31 @@ export default tseslint.config(
 	{
 		ignores: [
 			"node_modules/**",
-			"dist/**",
+			"**/node_modules/**",
+			"**/dist/**",
 			"coverage/**",
 			"**/*.mjs",
 			"**/*.cjs",
 			"**/*.js",
-			"main.js",
-			"versions.json",
 			"test-vault/**",
 			"examples/**",
 			"scripts/**",
-			"vitest.config.ts",
-			"src/tests/**",
-			"src/__mocks__/**",
+			"apps/desktop/vite.config.ts",
+			"apps/desktop/src/tests/**",
+			"apps/desktop/src/__mocks__/**",
 			"_site/**",
-			"azure-functions/**",
+			"apps/api/**",
 		],
 	},
-	...tseslint.configs.recommended,
+	...recommendedConfigs,
+	sharedRules,
 	{
 		files: ["**/*.ts", "**/*.tsx"],
 		languageOptions: {
-			globals: {
-				...globals.browser,
-				...globals.node,
-			},
 			parserOptions: {
 				projectService: true,
 				tsconfigRootDir: __dirname,
 			},
 		},
-		rules: {
-			// TypeScript rules - Configure for gradual cleanup
-			"@typescript-eslint/no-unused-vars": ["warn", { 
-				argsIgnorePattern: "^_",
-				varsIgnorePattern: "^_" 
-			}],
-			"@typescript-eslint/no-explicit-any": "warn",
-			"@typescript-eslint/explicit-module-boundary-types": "off",
-			"@typescript-eslint/no-non-null-assertion": "warn",
-			"@typescript-eslint/no-empty-object-type": "off",
-			"@typescript-eslint/no-unused-expressions": "off",
-			"@typescript-eslint/no-this-alias": "warn",
-			"prefer-const": "warn",
-		},
 	}
-);
+) satisfies ConfigArray;

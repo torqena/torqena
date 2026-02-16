@@ -37,7 +37,7 @@ Required checks before merging:
 
 ### Option 1: GitHub Web UI (Recommended)
 
-1. Go to your repository on GitHub: https://github.com/danielshue/obsidian-vault-copilot
+1. Go to your repository on GitHub: https://github.com/danielshue/torqena
 2. Click **Settings** → **Branches**
 3. Under "Branch protection rules", click **Add rule**
 4. Configure as follows:
@@ -72,7 +72,7 @@ If you have GitHub CLI installed:
 gh auth login
 
 # Create branch protection rule
-gh api repos/danielshue/obsidian-vault-copilot/branches/master/protection \
+gh api repos/danielshue/torqena/branches/master/protection \
   --method PUT \
   --field required_status_checks[strict]=true \
   --field required_status_checks[contexts][]=build \

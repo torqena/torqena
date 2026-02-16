@@ -4,12 +4,12 @@
 
 - Target: Desktop application (Electron 40 + Vite 5 + TypeScript).
 - Architecture: Three-layer Electron app — main process, preload bridge, Vite-bundled renderer.
-- Structure: Flat layout — `electron/` (main process), `src/` (renderer + features), `tests/` (test suites).
+- Structure: npm workspaces monorepo — `apps/desktop/` (Electron + renderer), `apps/api/` (Azure Functions), `packages/` (shared config & types).
 - Release artifacts: Platform installers (Windows NSIS, macOS DMG, Linux AppImage) packaged by electron-builder.
 
 ```
 ┌───────────────────────────────────────────┐
-│ Electron Main Process (electron/)         │
+│ Electron Main Process (apps/desktop/electron/) │
 │  ├── WindowManager (main + child windows) │
 │  ├── ProcessManager (MCP stdio servers)   │
 │  ├── FS IPC handlers (read/write/list)    │
@@ -23,7 +23,7 @@
 │  ├── LayoutManager (3-column workspace)   │
 │  ├── PaneManager (tabbed editor panes)    │
 │  ├── EditorManager (CodeMirror 6)         │
-│  └── Feature code (src/)                  │
+│  └── Feature code (apps/desktop/src/)          │
 │     ├── AI providers & MCP               │
 │     ├── Chat UI, settings, extensions    │
 │     └── Automation, tools, voice         │
@@ -33,12 +33,12 @@
 ## Environment & tooling
 
 - **Runtime**: Electron 40 (Chromium renderer + Node.js main process).
-- **Bundler**: Vite 5 — builds the renderer app. Config at `vite.config.ts` (root).
-- **Package manager**: npm (single package, no workspaces).
+- **Bundler**: Vite 5 — builds the renderer app. Config at `apps/desktop/vite.config.ts` (includes Vitest config).
+- **Package manager**: npm workspaces monorepo.
 - **Editor**: CodeMirror 6 (full markdown editing with live preview, syntax highlighting, frontmatter support).
-- **Packaging**: electron-builder — produces platform-specific installers to `release/`.
-- **Types**: TypeScript 5.8+ with strict mode.
-- **Testing**: Vitest 4 at the root level. Tests in `tests/`.
+- **Packaging**: electron-builder — config in `apps/desktop/electron-builder.yml`, produces platform-specific installers to `release/`.
+- **Types**: TypeScript 5.8+ with strict mode. Shared base config at `packages/config/tsconfig.base.json`.
+- **Testing**: Vitest 4 — config merged into `apps/desktop/vite.config.ts`. Tests in `apps/desktop/src/tests/`.
 
 ### Install
 
@@ -68,10 +68,8 @@ Builds the renderer via Vite, then packages the Electron app via electron-builde
 
 | Script | Command | Purpose |
 |--------|---------|---------|
-| `npm run dev` | `node esbuild.config.mjs` | Dev build (Obsidian plugin, if applicable) |
 | `npm run dev:shell` | `vite` | Vite dev server only (renderer at localhost:5173) |
 | `npm run dev:electron` | `concurrently "vite" "wait-on ... && electron ."` | Full Electron dev mode with hot reload |
-| `npm run build` | `tsc && esbuild` | Build (type-check + bundle) |
 | `npm run build:shell` | `vite build` | Build renderer to `dist/` |
 | `npm run build:electron` | `vite build && electron-builder` | Build + package desktop app |
 | `npm run lint` | `eslint .` | Lint all source files |
@@ -82,16 +80,16 @@ Builds the renderer via Vite, then packages the Electron app via electron-builde
 
 ## Linting
 
-- ESLint config at `eslint.config.mts`.
+- ESLint shared config at `packages/config/eslint.config.mts`, root config at `eslint.config.mts`.
 - To lint all source files: `npm run lint`
-- To lint a specific folder: `npx eslint ./src/`
+- To lint a specific folder: `npx eslint ./apps/desktop/src/`
 
 ## Key conventions
 
 - **Split large files**: Keep files under ~200-300 lines.
 - **Single responsibility**: Each file/module has one well-defined purpose.
 - **Do not commit**: `node_modules/`, `dist/`, `release/`.
-- **CSS**: Component files in `src/styles/`, imported into `styles.css`.
+- **CSS**: Component files in `apps/desktop/src/styles/`, imported into `styles.css`.
 
 ## File & folder conventions
 
@@ -99,104 +97,107 @@ Builds the renderer via Vite, then packages the Electron app via electron-builde
 
 ```
 torqena/
-├── electron/                       # Main process (Node.js)
-│   ├── main.cjs                    # App entry, IPC wiring
-│   ├── preload.cjs                 # contextBridge → window.electronAPI
-│   ├── WindowManager.cjs           # BrowserWindow lifecycle
-│   └── ProcessManager.cjs          # Child process management
+├── apps/
+│   ├── desktop/                        # Electron desktop application
+│   │   ├── electron/                   # Main process (Node.js)
+│   │   │   ├── main.cjs               # App entry, IPC wiring
+│   │   │   ├── preload.cjs            # contextBridge → window.electronAPI
+│   │   │   ├── WindowManager.cjs      # BrowserWindow lifecycle
+│   │   │   └── ProcessManager.cjs     # Child process management
+│   │   │
+│   │   ├── src/                        # Renderer (Vite-bundled, runs in Chromium)
+│   │   │   ├── index.html             # HTML entry
+│   │   │   ├── shell-main.ts          # Renderer bootstrap (Vite entry)
+│   │   │   │
+│   │   │   ├── app/                   # App lifecycle controller
+│   │   │   │   └── WebShellApp.ts
+│   │   │   │
+│   │   │   ├── ai/                    # AI provider system
+│   │   │   │   ├── providers/         # AIProvider base, Copilot, OpenAI, Azure
+│   │   │   │   ├── mcp/              # MCP manager, stdio + HTTP clients
+│   │   │   │   ├── tools/            # Tool definitions, vault operations
+│   │   │   │   ├── customization/    # Skills, agents, prompts
+│   │   │   │   ├── voice-chat/       # Voice input support
+│   │   │   │   ├── realtime-agent/   # Real-time agent
+│   │   │   │   ├── bases/            # Document database views
+│   │   │   │   └── TracingService.ts  # SDK diagnostics
+│   │   │   │
+│   │   │   ├── chat/                  # Chat feature
+│   │   │   │   ├── components/        # ChatView, message renderers, input area
+│   │   │   │   ├── managers/          # Session, input, voice managers
+│   │   │   │   ├── modals/           # Tracing, history, tool picker
+│   │   │   │   └── processing/       # Message processing pipeline
+│   │   │   │
+│   │   │   ├── editor/               # CodeMirror 6 integration
+│   │   │   ├── layout/               # Shell layout, sidebar, resize handles
+│   │   │   ├── automation/           # Scheduled/triggered workflows
+│   │   │   ├── extensions/           # Extension manager, catalog, marketplace
+│   │   │   ├── shell-settings/       # Shell-specific settings tabs
+│   │   │   ├── ui/                   # UI components (settings, extensions, mcp-apps)
+│   │   │   │
+│   │   │   ├── platform/            # Native API implementations (obsidian shim)
+│   │   │   │   ├── core/             # App, Plugin, Component
+│   │   │   │   ├── dom/              # DOM extensions
+│   │   │   │   ├── ui/               # Modal, Notice, Menu, Setting
+│   │   │   │   ├── vault/            # Vault, TFile, TFolder
+│   │   │   │   ├── workspace/        # Workspace, View, Leaf
+│   │   │   │   └── utils/            # Platform, icons, YAML
+│   │   │   │
+│   │   │   ├── stubs/               # IPC-backed Node.js API stubs
+│   │   │   ├── utils/               # Pure utility functions
+│   │   │   ├── types/               # TypeScript interfaces
+│   │   │   ├── styles/              # Modular CSS files
+│   │   │   ├── __mocks__/           # Test mocks
+│   │   │   └── tests/               # Test suites
+│   │   │       ├── automation/
+│   │   │       ├── copilot/
+│   │   │       ├── extensions/
+│   │   │       ├── realtime-agent/
+│   │   │       ├── ui/
+│   │   │       ├── utils/
+│   │   │       ├── smoke/
+│   │   │       └── setup.ts
+│   │   │
+│   │   ├── vite.config.ts            # Vite + Vitest config
+│   │   ├── electron-builder.yml      # Electron packaging config
+│   │   ├── tsconfig.json             # Extends packages/config/tsconfig.base.json
+│   │   └── package.json              # @torqena/desktop
+│   │
+│   └── api/                           # Azure Functions backend
+│       ├── src/                       # Function source code
+│       ├── scripts/                   # Admin & deployment scripts
+│       ├── package.json
+│       └── tsconfig.json
 │
-├── src/                            # Renderer (Vite-bundled, runs in Chromium)
-│   ├── index.html                  # HTML entry
-│   ├── shell-main.ts               # Renderer bootstrap (Vite entry)
+├── packages/
+│   ├── config/                        # Shared build configuration
+│   │   ├── tsconfig.base.json        # Base TypeScript config
+│   │   ├── eslint.config.mts         # Shared ESLint rules
+│   │   └── package.json              # @torqena/config
 │   │
-│   ├── app/                        # App lifecycle controller
-│   │   └── WebShellApp.ts
-│   │
-│   ├── ai/                         # AI provider system
-│   │   ├── providers/              # AIProvider base, Copilot, OpenAI, Azure
-│   │   ├── mcp/                    # MCP manager, stdio + HTTP clients
-│   │   ├── tools/                  # Tool definitions, vault operations
-│   │   ├── customization/          # Skills, agents, prompts
-│   │   ├── voice-chat/             # Voice input support
-│   │   ├── realtime-agent/         # Real-time agent
-│   │   ├── bases/                  # Document database views
-│   │   └── TracingService.ts       # SDK diagnostics
-│   │
-│   ├── chat/                       # Chat feature
-│   │   ├── components/             # ChatView, message renderers, input area
-│   │   ├── managers/               # Session, input, voice managers
-│   │   ├── modals/                 # Tracing, history, tool picker
-│   │   └── processing/             # Message processing pipeline
-│   │
-│   ├── editor/                     # CodeMirror 6 integration
-│   │   ├── EditorManager.ts
-│   │   ├── PaneManager.ts
-│   │   ├── FrontmatterService.ts
-│   │   ├── LivePreviewPlugin.ts
-│   │   └── MarkedExtensions.ts
-│   │
-│   ├── layout/                     # Shell layout, sidebar, resize handles
-│   │   └── LayoutManager.ts
-│   │
-│   ├── automation/                 # Scheduled/triggered workflows
-│   ├── extensions/                 # Extension manager, catalog, marketplace
-│   │
-│   ├── shell-settings/             # Shell-specific settings tabs
-│   ├── ui/                         # UI components
-│   │   ├── settings/               # Settings tabs and sections
-│   │   ├── extensions/             # Extension browser UI
-│   │   └── mcp-apps/               # MCP app rendering
-│   │
-│   ├── native/                     # Native API implementations (obsidian shim)
-│   │   ├── core/                   # App, Plugin, Component
-│   │   ├── dom/                    # DOM extensions
-│   │   ├── ui/                     # Modal, Notice, Menu, Setting
-│   │   ├── vault/                  # Vault, TFile, TFolder
-│   │   ├── workspace/              # Workspace, View, Leaf
-│   │   └── utils/                  # Platform, icons, YAML
-│   │
-│   ├── stubs/                      # IPC-backed Node.js API stubs
-│   │   ├── fs.ts, path.ts          # Filesystem
-│   │   ├── child_process.ts        # Process spawning
-│   │   └── ...                     # crypto, http, https, net, os, util
-│   │
-│   ├── utils/                      # Pure utility functions
-│   ├── types/                      # TypeScript interfaces
-│   ├── styles/                     # Modular CSS files
-│   └── __mocks__/                  # Test mocks
+│   └── shared/                        # Shared types & utilities (placeholder)
+│       ├── src/
+│       │   └── index.ts
+│       ├── tsconfig.json
+│       └── package.json              # @torqena/shared
 │
-├── tests/                          # Test suites (mirrors src/ structure)
-│   ├── automation/
-│   ├── copilot/
-│   ├── extensions/
-│   ├── realtime-agent/
-│   ├── ui/
-│   ├── utils/
-│   ├── smoke/
-│   └── setup.ts
-│
-├── dist/                           # Vite build output (renderer)
-├── release/                        # electron-builder output (installers)
-│
-├── package.json                    # Single package (no workspaces)
-├── vite.config.ts                  # Vite config (root)
-├── tsconfig.json
-├── vitest.config.ts
-├── eslint.config.mts
+├── package.json                       # Root (workspaces, delegating scripts)
+├── tsconfig.json                      # Extends packages/config/tsconfig.base.json
+├── eslint.config.mts                  # Root ESLint config
 └── AGENTS.md
 ```
 
 **Key principles**:
 - **Feature-first** — `ai/`, `chat/`, `editor/`, `automation/`, `extensions/` are self-contained domains.
-- **Flat top-level** — No monorepo. `electron/` and `src/` at the root.
-- **Native shim** — `src/platform/` provides implementations for `"obsidian"` imports.
-- **Tests mirror source** — `tests/` structure parallels `src/`.
+- **Monorepo** — npm workspaces with `apps/*` and `packages/*`. Root delegates scripts to workspace packages.
+- **Native shim** — `apps/desktop/src/platform/` provides implementations for `"obsidian"` imports.
+- **Tests co-located** — `apps/desktop/src/tests/` lives alongside source code.
 
 ### CSS architecture
 
-Styles are split into modular component files under `src/styles/` and bundled by Vite. The entry point is `src/styles/styles.css`. Base theme and CSS custom properties are in `src/theme.css`.
+Styles are split into modular component files under `apps/desktop/src/styles/` and bundled by Vite. The entry point is `apps/desktop/src/styles/styles.css`. Base theme and CSS custom properties are in `apps/desktop/src/theme.css`.
 
-**Component styles** (`src/styles/`):
+**Component styles** (`apps/desktop/src/styles/`):
 
 | File | Purpose |
 |------|---------|
@@ -224,11 +225,11 @@ Styles are split into modular component files under `src/styles/` and bundled by
 | `whisper.css` | Whisper.cpp settings section |
 | `extensions.css` | Extension marketplace, cards, submission wizard |
 
-When adding new styles, create a component file in `src/styles/` and import it from `src/styles/styles.css`.
+When adding new styles, create a component file in `apps/desktop/src/styles/` and import it from `apps/desktop/src/styles/styles.css`.
 
 ## Electron architecture
 
-### Main process (`electron/`)
+### Main process (`apps/desktop/electron/`)
 
 The main process runs in Node.js and handles privileged operations via IPC:
 
@@ -236,9 +237,9 @@ The main process runs in Node.js and handles privileged operations via IPC:
 - **`WindowManager.cjs`** — Creates and manages BrowserWindows. Supports frameless titlebar (hidden frame with overlay on Windows), child pop-out windows with `?view=` query params, tab docking from child windows back to main.
 - **`ProcessManager.cjs`** — Manages spawned child processes for MCP stdio servers. Tracks active processes by ID, routes stdout/stderr/close/error events to the renderer.
 
-### Preload (`electron/preload.cjs`)
+### Preload (`apps/desktop/electron/preload.cjs`)
 
-Exposes safe APIs to the renderer via `contextBridge` as `window.electronAPI`. TypeScript declarations in `src/electron-api.d.ts`.
+Exposes safe APIs to the renderer via `contextBridge` as `window.electronAPI`. TypeScript declarations in `apps/desktop/src/electron-api.d.ts`.
 
 ### IPC surface (`window.electronAPI`)
 
@@ -250,17 +251,17 @@ Exposes safe APIs to the renderer via `contextBridge` as `window.electronAPI`. T
 | **Window** | `openDirectory`, `setWindowFrame`, `getWindowFrame`, `setTitleBarOverlay`, `openWindow`, `dockTab`, `onDockTab` |
 | **Platform** | `getPlatformInfo` |
 
-### Renderer (`src/`)
+### Renderer (`apps/desktop/src/`)
 
-The renderer is a Vite-bundled web app that uses standard DOM APIs, CodeMirror 6 for editing, and `window.electronAPI` for privileged operations. Entry point is `src/shell-main.ts`.
+The renderer is a Vite-bundled web app that uses standard DOM APIs, CodeMirror 6 for editing, and `window.electronAPI` for privileged operations. Entry point is `apps/desktop/src/shell-main.ts`.
 
-### Node.js API stubs (`src/stubs/`)
+### Node.js API stubs (`apps/desktop/src/stubs/`)
 
 IPC-backed stubs for Node.js built-ins used by feature code. These redirect Node API calls through the Electron IPC bridge so code that uses `fs`, `path`, `child_process`, etc. works in the renderer:
 
 `child_process.ts`, `crypto.ts`, `fs.ts`, `fs_promises.ts`, `http.ts`, `https.ts`, `net.ts`, `os.ts`, `path.ts`, `util.ts`
 
-Vite aliases these modules to the stubs at build time via `vite.config.ts`.
+Vite aliases these modules to the stubs at build time via `apps/desktop/vite.config.ts`.
 
 ## Native API approach
 
@@ -283,7 +284,7 @@ Torqena uses **raw web APIs** and Electron's IPC bridge — no abstraction frame
 
 ### Migration from legacy imports
 
-The shared feature code in `src/` currently imports from `"obsidian"`. These imports are being migrated to native APIs. During the transition, Vite aliases `"obsidian"` → the shim package. The target state is zero `import ... from "obsidian"` statements — all code uses native DOM, `window.electronAPI`, or direct library imports.
+The shared feature code in `apps/desktop/src/` currently imports from `"obsidian"`. These imports are being migrated to native APIs. During the transition, Vite aliases `"obsidian"` → the shim package. The target state is zero `import ... from "obsidian"` statements — all code uses native DOM, `window.electronAPI`, or direct library imports.
 
 ## AI providers
 
@@ -292,7 +293,7 @@ Torqena supports multiple AI providers:
 ### GitHub Copilot (Primary)
 - **Provider Type**: `copilot`
 - **Requirements**: GitHub Copilot subscription and CLI installed
-- **Implementation**: `src/ai/providers/GitHubCopilotCliService.ts`
+- **Implementation**: `apps/desktop/src/ai/providers/GitHubCopilotCliService.ts`
 - **Features**: 
   - Full GitHub Copilot CLI SDK integration
   - Agent Skills support
@@ -303,7 +304,7 @@ Torqena supports multiple AI providers:
 ### OpenAI
 - **Provider Type**: `openai`
 - **Requirements**: OpenAI API key
-- **Implementation**: `src/ai/providers/OpenAIService.ts`
+- **Implementation**: `apps/desktop/src/ai/providers/OpenAIService.ts`
 - **Features**:
   - Direct OpenAI API access with streaming
   - Tool/function calling support
@@ -313,7 +314,7 @@ Torqena supports multiple AI providers:
 ### Azure OpenAI
 - **Provider Type**: `azure-openai`
 - **Requirements**: Azure OpenAI resource and API key
-- **Implementation**: `src/ai/providers/AzureOpenAIService.ts`
+- **Implementation**: `apps/desktop/src/ai/providers/AzureOpenAIService.ts`
 - **Features**:
   - Azure OpenAI API access with streaming
   - Tool/function calling support
@@ -321,23 +322,23 @@ Torqena supports multiple AI providers:
   - Deployment-based model selection
 
 ### Provider architecture
-- **Base Abstraction**: `AIProvider` abstract class (`src/ai/providers/AIProvider.ts`)
+- **Base Abstraction**: `AIProvider` abstract class (`apps/desktop/src/ai/providers/AIProvider.ts`)
   - Common interface: `initialize()`, `sendMessage()`, `sendMessageStreaming()`, `abort()`, `isReady()`, `destroy()`
   - Tools management: `setTools()`, `convertMcpToolsToToolDefinitions()`
   - History management: `getMessageHistory()`, `clearHistory()`
-- **Factory**: `AIProviderFactory` (`src/ai/providers/AIProviderFactory.ts`) — creates providers based on user configuration
+- **Factory**: `AIProviderFactory` (`apps/desktop/src/ai/providers/AIProviderFactory.ts`) — creates providers based on user configuration
 - **Configuration**: Settings UI allows selecting provider and entering API keys/endpoints
 
 ### Model Context Protocol (MCP)
 
-- **Stdio MCP**: Via `StdioMcpClient` (`src/ai/mcp/StdioMcpClient.ts`)
+- **Stdio MCP**: Via `StdioMcpClient` (`apps/desktop/src/ai/mcp/StdioMcpClient.ts`)
   - Spawns local MCP server processes via `window.electronAPI.spawn`
   - Configured in `.github/copilot-mcp-servers.json`
   - Process lifecycle managed by Electron's `ProcessManager`
-- **HTTP MCP**: Via `HttpMcpClient` (`src/ai/mcp/HttpMcpClient.ts`)
+- **HTTP MCP**: Via `HttpMcpClient` (`apps/desktop/src/ai/mcp/HttpMcpClient.ts`)
   - Connects to remote MCP servers over HTTP/HTTPS
   - Uses JSON-RPC 2.0 protocol
-- **MCP Manager**: `McpManager` (`src/ai/mcp/McpManager.ts`) coordinates both transport types and exposes tools to all AI providers
+- **MCP Manager**: `McpManager` (`apps/desktop/src/ai/mcp/McpManager.ts`) coordinates both transport types and exposes tools to all AI providers
 
 ## Utilities
 
@@ -351,13 +352,13 @@ Torqena supports multiple AI providers:
 
 ### Diagnostics & tracing
 
-- **TracingService** (`src/ai/TracingService.ts`) — captures SDK logs, prompts, responses, and events
+- **TracingService** (`apps/desktop/src/ai/TracingService.ts`) — captures SDK logs, prompts, responses, and events
 - **Pop-out windows** — diagnostics and voice history can open in separate windows via `window.electronAPI.openWindow`
 
 ## Testing
 
 - **Framework**: Vitest 4 with V8 coverage
-- **Test location**: `tests/`
+- **Test location**: `apps/desktop/src/tests/`
 - **Commands**:
   ```bash
   npm test              # Run all tests
@@ -588,7 +589,7 @@ localStorage.setItem("torqena-settings", JSON.stringify(settings));
 
 - **App doesn't start**: Ensure `npm install` has run. Check that Vite dev server is running before launching Electron in split mode.
 - **Blank window in dev**: Vite must be serving at `http://localhost:5173`. Run `npm run dev:electron` for the concurrent workflow.
-- **IPC errors**: Verify the method exists in `electron/preload.cjs` and is declared in `src/electron-api.d.ts`. Check the main process console for errors.
+- **IPC errors**: Verify the method exists in `apps/desktop/electron/preload.cjs` and is declared in `apps/desktop/src/electron-api.d.ts`. Check the main process console for errors.
 - **Build fails**: Run `npm run build:shell` first to verify the renderer builds. Then `npm run build:electron` for the full package.
 - **Secrets not persisting**: Electron `safeStorage` requires the OS keychain. On Linux, ensure `libsecret` is installed.
 

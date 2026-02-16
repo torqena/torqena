@@ -4,7 +4,7 @@
     Configures branch protection rules for the master branch
 .DESCRIPTION
     Uses GitHub CLI (gh) or REST API to set up recommended branch protection
-    rules for the obsidian-vault-copilot repository.
+    rules for the torqena repository.
 .PARAMETER Token
     GitHub personal access token (or use GITHUB_TOKEN environment variable)
 .PARAMETER DryRun
@@ -24,7 +24,7 @@ $ErrorActionPreference = "Stop"
 
 # Configuration
 $Owner = "danielshue"
-$Repo = "obsidian-vault-copilot"
+$Repo = "torqena"
 $Branch = "master"
 
 $ProtectionConfig = @{

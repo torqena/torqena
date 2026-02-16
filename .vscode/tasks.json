@@ -58,7 +58,7 @@
 			"isBackground": true,
 			"dependsOn": "npm watch (functions)",
 			"options": {
-				"cwd": "${workspaceFolder}/azure-functions"
+				"cwd": "${workspaceFolder}/apps/api"
 			}
 		},
 		{
@@ -68,7 +68,7 @@
 			"dependsOn": "npm clean (functions)",
 			"problemMatcher": "$tsc",
 			"options": {
-				"cwd": "${workspaceFolder}/azure-functions"
+				"cwd": "${workspaceFolder}/apps/api"
 			}
 		},
 		{
@@ -83,7 +83,7 @@
 			},
 			"isBackground": true,
 			"options": {
-				"cwd": "${workspaceFolder}/azure-functions"
+				"cwd": "${workspaceFolder}/apps/api"
 			}
 		},
 		{
@@ -91,7 +91,7 @@
 			"label": "npm install (functions)",
 			"command": "npm install",
 			"options": {
-				"cwd": "${workspaceFolder}/azure-functions"
+				"cwd": "${workspaceFolder}/apps/api"
 			}
 		},
 		{
@@ -101,7 +101,7 @@
 			"dependsOn": "npm build (functions)",
 			"problemMatcher": [],
 			"options": {
-				"cwd": "${workspaceFolder}/azure-functions"
+				"cwd": "${workspaceFolder}/apps/api"
 			}
 		},
 		{
@@ -110,7 +110,7 @@
 			"command": "npm run clean",
 			"dependsOn": "npm install (functions)",
 			"options": {
-				"cwd": "${workspaceFolder}/azure-functions"
+				"cwd": "${workspaceFolder}/apps/api"
 			}
 		}
 	]

@@ -13,11 +13,9 @@ I've set up everything you need for branch protection:
 
 ### 3. CI Workflow
 - **`.github/workflows/ci.yml`** - Comprehensive CI pipeline with:
-  - ✅ **build** - Validates TypeScript compilation and esbuild
+  - ✅ **build** - Validates Vite renderer build
   - ✅ **test** - Runs Vitest tests with coverage
-  - ✅ **lint** - Runs ESLint checks
   - ✅ **typecheck** - TypeScript type checking
-  - ✅ **validate-catalog** - Validates extensions (on extension PRs)
 
 ### 4. Code Ownership
 - **`.github/CODEOWNERS`** - Auto-request reviews for critical paths
@@ -42,7 +40,7 @@ This will configure:
 
 ### Method 2: GitHub Web UI (5 minutes)
 
-1. Go to: https://github.com/danielshue/obsidian-vault-copilot/settings/branches
+1. Go to: https://github.com/danielshue/torqena/settings/branches
 2. Click **"Add rule"**
 3. Enter branch name pattern: `master`
 4. Check these boxes:
@@ -127,15 +125,13 @@ git push origin test-branch-protection
 
 ### Extension Catalog
 - Extension submissions auto-validated
-- Catalog rebuilds verified
-- Schema compliance enforced
 
 ## ⚡ Status Check Details
 
 The new CI workflow provides these checks:
 
-1. **build** - Compiles TypeScript and bundles with esbuild
-   - Creates `main.js`
+1. **build** - Builds the Vite renderer
+   - Creates `dist/`
    - Validates compilation
 
 2. **test** - Runs test suite
@@ -143,31 +139,16 @@ The new CI workflow provides these checks:
    - Coverage reports uploaded
    - Must pass all tests
 
-3. **lint** - Code quality
-   - ESLint checks
-   - Catches common issues
-   - Enforces code style
-
-4. **typecheck** - Type safety
+3. **typecheck** - Type safety
    - TypeScript type checking
    - Finds type errors
-   - No `any` escapes
-
-5. **validate-catalog** - Extensions (when modified)
-   - Validates manifests against schema
-   - Checks file structure
-   - Rebuilds catalog
 
 ## 🔍 Existing Workflows
 
 Your existing workflows will continue to work:
 
-- **build-and-deploy.yml** - Extension catalog deployment (on push to master)
-- **validate-pr.yml** - Extension validation (on PRs affecting extensions)
-- **lint.yml** - Build check (will be superseded by ci.yml)
-- **release.yml** - Release automation (on tags)
-
-You may want to archive `lint.yml` since `ci.yml` provides more comprehensive checks.
+- **ci.yml** - Build, test, and type check on PRs and master pushes
+- **lint.yml** - ESLint checks
 
 ## 📚 Resources
 

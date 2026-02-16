@@ -1,0 +1,7 @@
+{
+  "name": "@torqena/config",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Shared TypeScript and ESLint configurations for Torqena monorepo.",
+  "type": "module"
+}

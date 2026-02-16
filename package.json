@@ -1,121 +1,35 @@
 {
-  "name": "obsidian-vault-copilot",
+  "name": "torqena",
   "version": "0.0.26",
-  "description": "Vault Copilot brings AI assistance into Obsidian by connecting to your GitHub Copilot account, enabling chat, note operations, extensible skills, MCP tools, and advanced workflows powered by the Copilot CLI SDK.",
-  "main": "main.js",
+  "private": true,
+  "description": "Torqena is an AI-powered desktop application for knowledge management, built with Electron, Vite, and the GitHub Copilot CLI SDK.",
   "type": "module",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "scripts": {
-    "dev": "node esbuild.config.mjs",
-    "dev:shell": "vite",
-    "dev:electron": "concurrently \"vite\" \"wait-on http://localhost:5173 && cross-env NODE_ENV=development electron electron/main.cjs\"",
-    "build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
-    "build:shell": "vite build",
-    "build:electron": "vite build && electron-builder",
-    "deploy": "node deploy.mjs",
-    "deploy:no-reload": "node deploy.mjs --no-reload",
-    "build:deploy": "npm run build && npm run deploy",
-    "dev:errors": "obsidian dev:errors",
-    "dev:console": "obsidian dev:console limit=100",
-    "dev:screenshot": "obsidian dev:screenshot path=screenshot.png",
-    "dev:screenshot:docs": "node scripts/capture-screenshots.mjs --no-timestamp",
-    "dev:screenshot:docs:mobile": "node scripts/capture-screenshots.mjs --no-timestamp --mobile",
-    "dev:mobile": "obsidian dev:mobile on",
-    "dev:mobile:off": "obsidian dev:mobile off",
-    "plugin:info": "obsidian plugin id=obsidian-vault-copilot",
-    "plugin:reload": "obsidian plugin:reload id=obsidian-vault-copilot",
-    "version": "node version-bump.mjs && git add manifest.json versions.json",
+    "dev:shell": "npm run dev:shell -w @torqena/desktop",
+    "dev:electron": "npm run dev:electron -w @torqena/desktop",
+    "build:shell": "npm run build:shell -w @torqena/desktop",
+    "build:electron": "npm run build:electron -w @torqena/desktop",
     "lint": "eslint .",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage",
-    "electron": "cross-env NODE_ENV=development electron electron/main.cjs"
-  },
-  "build": {
-    "appId": "com.vault-copilot.app",
-    "productName": "Vault Copilot",
-    "files": [
-      "dist/**/*",
-      "electron/**/*"
-    ],
-    "extraResources": [
-      {
-        "from": "electron",
-        "to": "electron"
-      }
-    ],
-    "directories": {
-      "output": "release"
-    },
-    "win": {
-      "target": "nsis"
-    },
-    "mac": {
-      "target": "dmg"
-    },
-    "linux": {
-      "target": "AppImage"
-    }
+    "test": "npm run test -w @torqena/desktop",
+    "test:watch": "npm run test:watch -w @torqena/desktop",
+    "test:coverage": "npm run test:coverage -w @torqena/desktop",
+    "electron": "npm run electron -w @torqena/desktop"
   },
   "keywords": [
-    "obsidian",
     "copilot",
     "ai",
-    "github"
+    "github",
+    "electron"
   ],
   "license": "MIT",
   "devDependencies": {
-    "@eslint/js": "9.30.1",
-    "@eslint/json": "^1.0.0",
-    "@types/js-yaml": "^4.0.9",
-    "@types/node": "^16.11.6",
-    "@vitest/coverage-v8": "^4.0.18",
-    "ajv": "^8.12.0",
-    "ajv-formats": "^2.1.1",
-    "concurrently": "^9.1.2",
-    "cross-env": "^7.0.3",
-    "electron": "^40.4.1",
-    "electron-builder": "^26.7.0",
-    "esbuild": "0.25.5",
-    "eslint-plugin-obsidianmd": "0.1.9",
-    "globals": "14.0.0",
-    "jiti": "2.6.1",
-    "sharp": "^0.34.5",
-    "tslib": "2.4.0",
+    "eslint": "^9.39.2",
     "typescript": "^5.8.3",
     "typescript-eslint": "8.35.1",
-    "vite": "^5.4.19",
-    "vitest": "^4.0.18",
-    "wait-on": "^8.0.3"
-  },
-  "dependencies": {
-    "@codemirror/commands": "^6.10.2",
-    "@codemirror/lang-markdown": "^6.5.0",
-    "@codemirror/language": "^6.12.1",
-    "@codemirror/language-data": "^6.5.2",
-    "@codemirror/search": "^6.6.0",
-    "@codemirror/state": "^6.5.4",
-    "@codemirror/theme-one-dark": "^6.1.3",
-    "@codemirror/view": "^6.39.14",
-    "@github/copilot-sdk": "latest",
-    "@lezer/highlight": "^1.2.3",
-    "@openai/agents": "^0.4.4",
-    "@replit/codemirror-indentation-markers": "^6.5.3",
-    "@replit/codemirror-vim": "^6.3.0",
-    "@uiw/codemirror-extensions-hyper-link": "^4.25.4",
-    "buffer": "^5.7.1",
-    "cron-parser": "^5.5.0",
-    "highlight.js": "^11.11.1",
-    "idb-keyval": "^6.2.1",
-    "katex": "^0.16.28",
-    "lucide": "^0.564.0",
-    "marked": "^12.0.2",
-    "marked-footnote": "^1.4.0",
-    "marked-highlight": "^2.2.3",
-    "mermaid": "^11.12.2",
-    "moment": "^2.30.1",
-    "obsidian": "latest",
-    "openai": "^4.77.0",
-    "thememirror": "^2.0.1",
-    "zod": "^4.3.6"
+    "globals": "14.0.0"
   }
 }

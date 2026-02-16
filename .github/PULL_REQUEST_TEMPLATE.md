@@ -1,65 +1,30 @@
-# Extension Submission
-
-## Extension Details
-
-**Extension Name:** 
-**Extension ID:** 
-**Type:** <!-- agent | voice-agent | prompt | skill | mcp-server -->
-**Version:** 
+# Pull Request
 
 ## Description
 
-<!-- Brief description of what your extension does -->
+<!-- Brief description of what this PR does -->
+
+## Type of Change
+
+- [ ] Bug fix
+- [ ] New feature
+- [ ] Refactoring (no functional changes)
+- [ ] Documentation update
+- [ ] Build/CI configuration change
 
 ## Checklist
 
-### Required Files
-
-- [ ] `manifest.json` (validates against schema)
-- [ ] `README.md` (with Jekyll frontmatter)
-- [ ] Extension file(s) (`.agent.md`, `.prompt.md`, etc.)
-- [ ] `preview.png` (recommended, 1280x720)
-
-### Metadata
-
-- [ ] Unique extension ID (not already in catalog)
-- [ ] Version follows semver (x.y.z)
-- [ ] Categories are from approved list
-- [ ] Description is clear and concise (< 200 chars)
-- [ ] Tools list matches actual usage
-- [ ] Dependencies are declared (if any)
-
-### Documentation
-
-- [ ] README includes installation instructions
-- [ ] README includes usage examples
-- [ ] README documents all features
-- [ ] README includes changelog
-
-### Quality
-
-- [ ] Extension solves a real use case
-- [ ] No hardcoded credentials
-- [ ] No malicious code patterns
-- [ ] Tested in Obsidian vault
-- [ ] Works as documented
-
-### Legal
-
-- [ ] Original work or properly attributed
-- [ ] License is specified (defaults to MIT)
-- [ ] No copyright violations
-
-## Testing Notes
-
-**Test environment:**
-- Vault Copilot version: 
-- Obsidian version: 
-- Platform: <!-- Windows | macOS | Linux | iOS | Android -->
+- [ ] Code follows project coding conventions
+- [ ] JSDoc documentation added/updated
+- [ ] Tests added or updated (if applicable)
+- [ ] `npm test` passes
+- [ ] `npm run lint` passes
+- [ ] No new warnings introduced
+- [ ] UI changes tested in Electron app
 
 ## Screenshots
 
-<!-- Add screenshots showing your extension in action -->
+<!-- Add screenshots if applicable -->
 
 ## Related Issues
 

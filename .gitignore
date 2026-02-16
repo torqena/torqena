@@ -10,6 +10,7 @@ node_modules
 # Build artifacts
 dist/
 release/
+apps/desktop/dist/
 
 # Exclude sourcemaps
 *.map
@@ -23,13 +24,9 @@ test-vault/Daily Notes/
 test-vault/.obsidian/workspace.json
 
 # Azure Functions build artifacts
-azure-functions/dist/
-azure-functions/node_modules/
-azure-functions/deploy.zip
-azure-functions/local.settings.json
+apps/api/dist/
+apps/api/node_modules/
+apps/api/deploy.zip
+apps/api/local.settings.json
 
 release-notes.txt
-
-# Packages build artifacts
-packages/*/node_modules/
-packages/*/dist/
