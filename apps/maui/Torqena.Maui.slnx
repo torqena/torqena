@@ -1,0 +1,7 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Torqena.Core/Torqena.Core.csproj" />
+    <Project Path="src/Torqena.Maui/Torqena.Maui.csproj" />
+    <Project Path="src/Torqena.Tests/Torqena.Tests.csproj" />
+  </Folder>
+</Solution>

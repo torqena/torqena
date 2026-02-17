@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Torqena Editor</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { height: 100%; overflow: hidden; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--editor-bg, #1e1e1e);
+            color: var(--editor-fg, #d4d4d4);
+        }
+        #editor {
+            width: 100%;
+            height: 100%;
+        }
+        .cm-editor {
+            height: 100%;
+        }
+        .cm-scroller {
+            overflow: auto;
+        }
+    </style>
+</head>
+<body>
+    <div id="editor"></div>
+    <script type="module" src="./src/editor-bridge.ts"></script>
+</body>
+</html>

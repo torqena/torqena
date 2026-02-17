@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+  Copyright (c) Dan Shue. All rights reserved.
+  Licensed under the MIT License. See License.txt in the project root for license information.
+-->
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:Torqena.Maui.ViewModels"
+             x:Class="Torqena.Maui.Views.SettingsPage"
+             x:DataType="vm:SettingsViewModel"
+             Title="Settings">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="24" Spacing="24" MaximumWidthRequest="600">
+
+            <!-- Appearance -->
+            <VerticalStackLayout Spacing="12">
+                <Label Text="Appearance" Style="{StaticResource Headline}" />
+
+                <Grid ColumnDefinitions="*,*" RowDefinitions="Auto" ColumnSpacing="8">
+                    <Label Text="Theme" VerticalOptions="Center" />
+                    <Picker Grid.Column="1"
+                            SelectedItem="{Binding Settings.Theme}">
+                        <Picker.ItemsSource>
+                            <x:Array Type="{x:Type x:String}">
+                                <x:String>system</x:String>
+                                <x:String>light</x:String>
+                                <x:String>dark</x:String>
+                            </x:Array>
+                        </Picker.ItemsSource>
+                    </Picker>
+                </Grid>
+
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                    <Label Text="Font size" VerticalOptions="Center" />
+                    <Stepper Grid.Column="1"
+                             Value="{Binding Settings.FontSize}"
+                             Minimum="10" Maximum="30" Increment="1" />
+                </Grid>
+
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                    <Label Text="Readable line length" VerticalOptions="Center" />
+                    <Switch Grid.Column="1"
+                            IsToggled="{Binding Settings.ReadableLineLength}" />
+                </Grid>
+            </VerticalStackLayout>
+
+            <BoxView HeightRequest="1" Color="{StaticResource BorderLight}" />
+
+            <!-- Editor -->
+            <VerticalStackLayout Spacing="12">
+                <Label Text="Editor" Style="{StaticResource Headline}" />
+
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                    <Label Text="Show line numbers" VerticalOptions="Center" />
+                    <Switch Grid.Column="1"
+                            IsToggled="{Binding Settings.ShowLineNumbers}" />
+                </Grid>
+
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                    <Label Text="Tab size" VerticalOptions="Center" />
+                    <Stepper Grid.Column="1"
+                             Value="{Binding Settings.TabSize}"
+                             Minimum="2" Maximum="8" Increment="2" />
+                </Grid>
+
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                    <Label Text="Indent using tabs" VerticalOptions="Center" />
+                    <Switch Grid.Column="1"
+                            IsToggled="{Binding Settings.IndentUsingTabs}" />
+                </Grid>
+
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                    <Label Text="Auto pair brackets" VerticalOptions="Center" />
+                    <Switch Grid.Column="1"
+                            IsToggled="{Binding Settings.AutoPairBrackets}" />
+                </Grid>
+
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                    <Label Text="Fold headings" VerticalOptions="Center" />
+                    <Switch Grid.Column="1"
+                            IsToggled="{Binding Settings.FoldHeadings}" />
+                </Grid>
+
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                    <Label Text="Spellcheck" VerticalOptions="Center" />
+                    <Switch Grid.Column="1"
+                            IsToggled="{Binding Settings.Spellcheck}" />
+                </Grid>
+
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                    <Label Text="Vim key bindings" VerticalOptions="Center" />
+                    <Switch Grid.Column="1"
+                            IsToggled="{Binding Settings.VimKeyBindings}" />
+                </Grid>
+
+                <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+                    <Label Text="Default view mode" VerticalOptions="Center" />
+                    <Picker Grid.Column="1"
+                            SelectedItem="{Binding Settings.DefaultViewMode}">
+                        <Picker.ItemsSource>
+                            <x:Array Type="{x:Type x:String}">
+                                <x:String>source</x:String>
+                                <x:String>live-preview</x:String>
+                                <x:String>reading</x:String>
+                            </x:Array>
+                        </Picker.ItemsSource>
+                    </Picker>
+                </Grid>
+            </VerticalStackLayout>
+
+            <BoxView HeightRequest="1" Color="{StaticResource BorderLight}" />
+
+            <!-- AI Provider -->
+            <VerticalStackLayout Spacing="12">
+                <Label Text="AI provider" Style="{StaticResource Headline}" />
+
+                <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+                    <Label Text="Provider" VerticalOptions="Center" />
+                    <Picker Grid.Column="1"
+                            ItemsSource="{Binding AvailableProviders}"
+                            SelectedItem="{Binding Settings.AIProvider}" />
+                </Grid>
+
+                <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+                    <Label Text="Model" VerticalOptions="Center" />
+                    <Picker Grid.Column="1"
+                            ItemsSource="{Binding AvailableModels}"
+                            SelectedItem="{Binding Settings.AIModel}" />
+                </Grid>
+
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="API key" FontAttributes="Bold" />
+                    <Label Text="{Binding ApiKeyDisplay}"
+                           FontFamily="Consolas"
+                           Opacity="0.7" />
+                    <Entry Placeholder="Paste new API key..."
+                           Text="{Binding ApiKeyInput}"
+                           IsPassword="True" />
+                    <HorizontalStackLayout Spacing="8">
+                        <Button Text="Save key"
+                                Command="{Binding SaveApiKeyCommand}" />
+                        <Button Text="Remove key"
+                                Command="{Binding DeleteApiKeyCommand}"
+                                Style="{StaticResource SecondaryButton}" />
+                    </HorizontalStackLayout>
+                    <Label Text="{Binding SaveStatus}"
+                           TextColor="{StaticResource Success}"
+                           FontSize="12" />
+                </VerticalStackLayout>
+
+                <!-- Azure endpoint (shown only for azure-openai) -->
+                <VerticalStackLayout Spacing="4"
+                                     IsVisible="False">
+                    <Label Text="Azure endpoint" FontAttributes="Bold" />
+                    <Entry Placeholder="https://your-resource.openai.azure.com"
+                           Text="{Binding AzureEndpoint}" />
+                </VerticalStackLayout>
+            </VerticalStackLayout>
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

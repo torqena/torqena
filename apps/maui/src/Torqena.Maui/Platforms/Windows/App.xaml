@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+  Copyright (c) Dan Shue. All rights reserved.
+  Licensed under the MIT License. See License.txt in the project root for license information.
+-->
+<maui:MauiWinUIApplication
+    x:Class="Torqena.Maui.WinUI.App"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:maui="using:Microsoft.Maui"
+    xmlns:local="using:Torqena.Maui.WinUI">
+</maui:MauiWinUIApplication>

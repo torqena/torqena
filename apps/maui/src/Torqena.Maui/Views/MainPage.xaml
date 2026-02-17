@@ -1,0 +1,213 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+  Copyright (c) Dan Shue. All rights reserved.
+  Licensed under the MIT License. See License.txt in the project root for license information.
+-->
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:Torqena.Maui.ViewModels"
+             x:Class="Torqena.Maui.Views.MainPage"
+             x:DataType="vm:MainViewModel"
+             Title="Torqena"
+             Shell.NavBarIsVisible="False">
+
+    <Grid RowDefinitions="Auto,*,Auto">
+
+        <!-- Top toolbar -->
+        <Grid Grid.Row="0"
+              ColumnDefinitions="Auto,*,Auto"
+              Padding="8"
+              BackgroundColor="{AppThemeBinding Light={StaticResource SurfaceLight}, Dark={StaticResource SurfaceDark}}">
+
+            <HorizontalStackLayout Grid.Column="0" Spacing="4">
+                <Button Text="☰"
+                        Command="{Binding ToggleSidebarCommand}"
+                        Style="{StaticResource SecondaryButton}"
+                        WidthRequest="40" HeightRequest="36" />
+                <Button Text="📁"
+                        Command="{Binding OpenVaultCommand}"
+                        Style="{StaticResource SecondaryButton}"
+                        WidthRequest="40" HeightRequest="36" />
+            </HorizontalStackLayout>
+
+            <Label Grid.Column="1"
+                   Text="{Binding VaultName}"
+                   HorizontalOptions="Center"
+                   VerticalOptions="Center"
+                   Style="{StaticResource SubHeadline}" />
+
+            <HorizontalStackLayout Grid.Column="2" Spacing="4">
+                <Button Text="💬"
+                        Command="{Binding ToggleChatCommand}"
+                        Style="{StaticResource SecondaryButton}"
+                        WidthRequest="40" HeightRequest="36" />
+            </HorizontalStackLayout>
+        </Grid>
+
+        <!-- Three-column layout -->
+        <Grid Grid.Row="1" ColumnDefinitions="250,*,350">
+
+            <!-- Left: File Explorer -->
+            <Grid Grid.Column="0"
+                  IsVisible="{Binding IsSidebarVisible}"
+                  BackgroundColor="{AppThemeBinding Light={StaticResource SurfaceLight}, Dark={StaticResource SurfaceDark}}">
+                <Grid RowDefinitions="Auto,*">
+                    <!-- Explorer header -->
+                    <Grid Grid.Row="0" Padding="8" ColumnDefinitions="*,Auto,Auto">
+                        <Label Text="Files"
+                               VerticalOptions="Center"
+                               FontAttributes="Bold" />
+                        <Button Grid.Column="1"
+                                Text="📄"
+                                Command="{Binding FileExplorer.CreateNoteCommand}"
+                                Style="{StaticResource SecondaryButton}"
+                                WidthRequest="32" HeightRequest="28" />
+                        <Button Grid.Column="2"
+                                Text="📁"
+                                Command="{Binding FileExplorer.CreateFolderCommand}"
+                                Style="{StaticResource SecondaryButton}"
+                                WidthRequest="32" HeightRequest="28" />
+                    </Grid>
+
+                    <!-- File tree -->
+                    <CollectionView Grid.Row="1"
+                                    ItemsSource="{Binding FileExplorer.RootNodes}"
+                                    SelectionMode="Single">
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate x:DataType="vm:FileTreeNode">
+                                <Grid Padding="12,6" ColumnDefinitions="Auto,*">
+                                    <Label Grid.Column="0"
+                                           Text="{Binding IsFolder, Converter={StaticResource BoolToIconConverter}}"
+                                           WidthRequest="20"
+                                           VerticalOptions="Center" />
+                                    <Label Grid.Column="1"
+                                           Text="{Binding Name}"
+                                           VerticalOptions="Center"
+                                           LineBreakMode="TailTruncation" />
+                                    <Grid.GestureRecognizers>
+                                        <TapGestureRecognizer
+                                            Command="{Binding Source={RelativeSource AncestorType={x:Type vm:MainViewModel}}, Path=FileExplorer.SelectNodeCommand}"
+                                            CommandParameter="{Binding .}" />
+                                    </Grid.GestureRecognizers>
+                                </Grid>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+                </Grid>
+            </Grid>
+
+            <!-- Center: Editor -->
+            <Grid Grid.Column="1" Padding="0">
+                <Grid RowDefinitions="Auto,*">
+                    <!-- Tab bar -->
+                    <CollectionView Grid.Row="0"
+                                    ItemsSource="{Binding Editor.Tabs}"
+                                    ItemsLayout="HorizontalList"
+                                    HeightRequest="36">
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate x:DataType="vm:EditorTab">
+                                <Border Padding="8,4"
+                                        StrokeThickness="0"
+                                        BackgroundColor="{Binding IsActive, Converter={StaticResource BoolToTabColorConverter}}">
+                                    <HorizontalStackLayout Spacing="4">
+                                        <Label Text="{Binding Title}"
+                                               VerticalOptions="Center" />
+                                        <Label Text="●"
+                                               IsVisible="{Binding IsDirty}"
+                                               TextColor="{StaticResource Warning}"
+                                               VerticalOptions="Center" />
+                                        <Button Text="✕"
+                                                Command="{Binding Source={RelativeSource AncestorType={x:Type vm:MainViewModel}}, Path=Editor.CloseTabCommand}"
+                                                CommandParameter="{Binding .}"
+                                                Style="{StaticResource SecondaryButton}"
+                                                WidthRequest="24" HeightRequest="24"
+                                                Padding="0" FontSize="10" />
+                                    </HorizontalStackLayout>
+                                </Border>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+
+                    <!-- WebView placeholder — EditorWebView will be injected here -->
+                    <ContentView Grid.Row="1"
+                                 x:Name="EditorContainer"
+                                 BackgroundColor="{AppThemeBinding Light=White, Dark=#1e1e1e}" />
+                </Grid>
+
+                <!-- Empty state when no vault -->
+                <VerticalStackLayout IsVisible="{Binding IsVaultOpen, Converter={StaticResource InvertBoolConverter}}"
+                                     HorizontalOptions="Center"
+                                     VerticalOptions="Center"
+                                     Spacing="16">
+                    <Label Text="Welcome to Torqena"
+                           Style="{StaticResource Headline}"
+                           HorizontalOptions="Center" />
+                    <Label Text="Open a vault folder to get started."
+                           HorizontalOptions="Center"
+                           Opacity="0.6" />
+                    <Button Text="Open vault"
+                            Command="{Binding OpenVaultCommand}"
+                            HorizontalOptions="Center" />
+                </VerticalStackLayout>
+            </Grid>
+
+            <!-- Right: Chat -->
+            <Grid Grid.Column="2"
+                  IsVisible="{Binding IsChatVisible}"
+                  BackgroundColor="{AppThemeBinding Light={StaticResource SurfaceLight}, Dark={StaticResource SurfaceDark}}">
+                <Grid RowDefinitions="Auto,*,Auto">
+                    <!-- Chat header -->
+                    <Grid Grid.Row="0" Padding="8" ColumnDefinitions="*,Auto">
+                        <Label Text="Chat"
+                               VerticalOptions="Center"
+                               FontAttributes="Bold" />
+                        <Label Grid.Column="1"
+                               Text="{Binding Chat.ActiveModel}"
+                               VerticalOptions="Center"
+                               Opacity="0.6"
+                               FontSize="12" />
+                    </Grid>
+
+                    <!-- Messages -->
+                    <CollectionView Grid.Row="1"
+                                    ItemsSource="{Binding Chat.Messages}"
+                                    x:Name="ChatMessages">
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate x:DataType="vm:ChatMessageItem">
+                                <VerticalStackLayout Padding="12,6" Spacing="2">
+                                    <Label Text="{Binding SenderName}"
+                                           FontAttributes="Bold"
+                                           FontSize="12" />
+                                    <Label Text="{Binding Content}"
+                                           LineBreakMode="WordWrap" />
+                                </VerticalStackLayout>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+
+                    <!-- Input area -->
+                    <Grid Grid.Row="2" Padding="8" ColumnDefinitions="*,Auto" ColumnSpacing="4">
+                        <Editor Grid.Column="0"
+                                Text="{Binding Chat.InputText}"
+                                Placeholder="Ask anything..."
+                                HeightRequest="60"
+                                AutoSize="TextChanges" />
+                        <Button Grid.Column="1"
+                                Text="Send"
+                                Command="{Binding Chat.SendMessageCommand}"
+                                VerticalOptions="End" />
+                    </Grid>
+                </Grid>
+            </Grid>
+        </Grid>
+
+        <!-- Status bar -->
+        <Grid Grid.Row="2"
+              Padding="8,4"
+              BackgroundColor="{AppThemeBinding Light={StaticResource SurfaceLight}, Dark={StaticResource SurfaceDark}}">
+            <Label Text="{Binding StatusText}"
+                   FontSize="11"
+                   Opacity="0.6" />
+        </Grid>
+    </Grid>
+</ContentPage>

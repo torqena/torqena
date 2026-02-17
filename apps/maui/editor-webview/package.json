@@ -1,0 +1,29 @@
+{
+  "name": "@torqena/editor-webview",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "CodeMirror 6 editor bundle for MAUI WebView",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@codemirror/autocomplete": "^6.18.6",
+    "@codemirror/commands": "^6.8.1",
+    "@codemirror/lang-markdown": "^6.3.2",
+    "@codemirror/language": "^6.11.0",
+    "@codemirror/lint": "^6.8.5",
+    "@codemirror/search": "^6.5.10",
+    "@codemirror/state": "^6.5.2",
+    "@codemirror/view": "^6.36.8",
+    "@lezer/highlight": "^1.2.1",
+    "@lezer/markdown": "^1.4.2",
+    "codemirror": "^6.0.1"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.3",
+    "vite": "^5.4.19"
+  }
+}
