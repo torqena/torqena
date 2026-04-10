@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Documentation & FAQ
+    url: https://www.torqena.com/faq
+    about: Check the FAQ before filing an issue
+  - name: Contact Support
+    url: https://www.torqena.com/contact
+    about: For account, billing, or private support questions
